@@ -222,7 +222,7 @@ The onboarding page (`/onboarding`) should:
 1. Display the claimed handle prominently: "You're claiming verified.doctor/[handle]"
 2. Show a form to collect:
    - Full Name (required)
-   - Specialty (required, dropdown with common specialties)
+   - Specialty (required, free text input)
    - Clinic Name (optional)
    - Clinic Location (optional)
    - Profile Photo (upload, with compression)

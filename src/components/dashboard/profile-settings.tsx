@@ -6,14 +6,6 @@ import { Loader2, Save, Upload, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { MEDICAL_SPECIALTIES } from "@/lib/specialties";
 
 interface Profile {
   id: string;
@@ -120,18 +112,12 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="specialty">Specialty</Label>
-              <Select value={specialty} onValueChange={setSpecialty}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select specialty" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[300px]">
-                  {MEDICAL_SPECIALTIES.map((spec) => (
-                    <SelectItem key={spec} value={spec}>
-                      {spec}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                id="specialty"
+                value={specialty}
+                onChange={(e) => setSpecialty(e.target.value)}
+                placeholder="e.g. Cardiologist"
+              />
             </div>
 
             <div className="space-y-2">

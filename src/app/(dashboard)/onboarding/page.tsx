@@ -16,14 +16,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { MEDICAL_SPECIALTIES } from "@/lib/specialties";
 
 export default function OnboardingPage() {
   const searchParams = useSearchParams();
@@ -272,18 +264,14 @@ export default function OnboardingPage() {
                   {/* Specialty */}
                   <div className="space-y-2">
                     <Label htmlFor="specialty">Specialty</Label>
-                    <Select value={specialty} onValueChange={setSpecialty}>
-                      <SelectTrigger className="h-12">
-                        <SelectValue placeholder="Select your specialty" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[300px]">
-                        {MEDICAL_SPECIALTIES.map((spec) => (
-                          <SelectItem key={spec} value={spec}>
-                            {spec}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Input
+                      id="specialty"
+                      type="text"
+                      value={specialty}
+                      onChange={(e) => setSpecialty(e.target.value)}
+                      placeholder="e.g. Cardiologist, General Physician, Dermatologist"
+                      className="h-12"
+                    />
                   </div>
 
                   {/* Years Experience */}
