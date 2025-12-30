@@ -21,6 +21,7 @@ export default function OnboardingPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const prefilledHandle = searchParams.get("handle");
+  const inviteCode = searchParams.get("invite");
 
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -95,6 +96,7 @@ export default function OnboardingPage() {
           yearsExperience: yearsExperience ? parseInt(yearsExperience) : undefined,
           profilePhotoUrl: profilePhoto || undefined,
           externalBookingUrl: externalBookingUrl || undefined,
+          inviteCode: inviteCode || undefined,
         }),
       });
 

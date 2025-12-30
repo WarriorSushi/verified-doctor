@@ -34,6 +34,13 @@ export default async function DashboardLayout({
     .eq("profile_id", profile.id)
     .eq("is_read", false);
 
+  // Get pending connection requests count
+  const { count: pendingConnectionsCount } = await supabase
+    .from("connections")
+    .select("*", { count: "exact", head: true })
+    .eq("receiver_id", profile.id)
+    .eq("status", "pending");
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
@@ -78,7 +85,10 @@ export default async function DashboardLayout({
         </div>
 
         {/* Navigation */}
-        <DashboardNav unreadCount={unreadCount || 0} />
+        <DashboardNav
+          unreadCount={unreadCount || 0}
+          pendingConnectionsCount={pendingConnectionsCount || 0}
+        />
       </header>
 
       {/* Main Content */}

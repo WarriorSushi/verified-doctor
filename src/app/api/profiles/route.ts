@@ -26,6 +26,7 @@ const createProfileSchema = z.object({
   yearsExperience: z.number().min(0).max(70).optional(),
   profilePhotoUrl: z.string().url().optional().or(z.literal("")),
   externalBookingUrl: z.string().url().optional().or(z.literal("")),
+  inviteCode: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -58,6 +59,7 @@ export async function POST(request: Request) {
       yearsExperience,
       profilePhotoUrl,
       externalBookingUrl,
+      inviteCode,
     } = result.data;
 
     // Check if handle is banned
@@ -128,9 +130,60 @@ export async function POST(request: Request) {
       );
     }
 
+    // Handle invite code - auto-connect with inviter
+    let connectedWith = null;
+    if (inviteCode) {
+      // Find the invite
+      const { data: invite } = await supabase
+        .from("invites")
+        .select(`
+          id,
+          inviter_profile_id,
+          used,
+          inviter:profiles!invites_inviter_profile_id_fkey(
+            id, full_name, handle
+          )
+        `)
+        .eq("invite_code", inviteCode)
+        .single();
+
+      if (invite && !invite.used) {
+        // Create connection between inviter and new user
+        const { error: connectionError } = await supabase
+          .from("connections")
+          .insert({
+            requester_id: invite.inviter_profile_id,
+            receiver_id: profile.id,
+            status: "accepted",
+          });
+
+        if (!connectionError) {
+          // Mark invite as used
+          await supabase
+            .from("invites")
+            .update({
+              used: true,
+              used_by_profile_id: profile.id,
+            })
+            .eq("id", invite.id);
+
+          // Increment connection counts for both
+          await supabase.rpc("increment_connection_count", {
+            profile_uuid: invite.inviter_profile_id,
+          });
+          await supabase.rpc("increment_connection_count", {
+            profile_uuid: profile.id,
+          });
+
+          connectedWith = invite.inviter;
+        }
+      }
+    }
+
     return NextResponse.json({
       success: true,
       profile,
+      connectedWith,
       message: `Your profile is live at verified.doctor/${handle}`,
     });
   } catch (error) {

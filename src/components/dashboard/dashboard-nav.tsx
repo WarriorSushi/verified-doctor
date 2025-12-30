@@ -3,20 +3,28 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, MessageSquare, Settings } from "lucide-react";
+import { LayoutDashboard, MessageSquare, Users, Settings } from "lucide-react";
 
 interface DashboardNavProps {
   unreadCount: number;
+  pendingConnectionsCount?: number;
 }
 
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
+  { href: "/dashboard/messages", label: "Messages", icon: MessageSquare, badgeKey: "messages" },
+  { href: "/dashboard/connections", label: "Connections", icon: Users, badgeKey: "connections" },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
-export function DashboardNav({ unreadCount }: DashboardNavProps) {
+export function DashboardNav({ unreadCount, pendingConnectionsCount = 0 }: DashboardNavProps) {
   const pathname = usePathname();
+
+  const getBadgeCount = (badgeKey?: string) => {
+    if (badgeKey === "messages") return unreadCount;
+    if (badgeKey === "connections") return pendingConnectionsCount;
+    return 0;
+  };
 
   return (
     <nav className="border-t border-slate-100 bg-white">
@@ -28,6 +36,7 @@ export function DashboardNav({ unreadCount }: DashboardNavProps) {
                 ? pathname === "/dashboard"
                 : pathname.startsWith(item.href);
             const Icon = item.icon;
+            const badgeCount = getBadgeCount(item.badgeKey);
 
             return (
               <Link
@@ -42,9 +51,9 @@ export function DashboardNav({ unreadCount }: DashboardNavProps) {
               >
                 <Icon className="w-4 h-4" />
                 {item.label}
-                {item.label === "Messages" && unreadCount > 0 && (
+                {badgeCount > 0 && (
                   <span className="ml-1 px-1.5 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full">
-                    {unreadCount}
+                    {badgeCount}
                   </span>
                 )}
               </Link>

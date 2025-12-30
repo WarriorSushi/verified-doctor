@@ -50,14 +50,34 @@ export async function getTestUser(): Promise<TestUser | null> {
 }
 
 /**
- * Create a test session with default or custom user data.
+ * Create a test session with custom user data.
+ * Generates a unique user ID based on the email to allow testing multiple accounts.
  */
-export function createTestSession(): TestUser {
-  return {
-    userId: process.env.TEST_USER_ID || "test_user_123",
-    email: process.env.TEST_USER_EMAIL || "test@verified.doctor",
-    name: process.env.TEST_USER_NAME || "Dr. Test User",
-  };
+export function createTestSession(params?: {
+  email?: string;
+  name?: string;
+}): TestUser {
+  const email = params?.email || process.env.TEST_USER_EMAIL || "test@verified.doctor";
+  const name = params?.name || process.env.TEST_USER_NAME || "Dr. Test User";
+
+  // Generate a unique user ID based on email hash
+  // This allows testing multiple accounts with different emails
+  const userId = `test_user_${simpleHash(email)}`;
+
+  return { userId, email, name };
+}
+
+/**
+ * Simple hash function to generate consistent IDs from email.
+ */
+function simpleHash(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(36);
 }
 
 /**

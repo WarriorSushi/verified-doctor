@@ -13,6 +13,7 @@ export default function SignUpPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const claimedHandle = searchParams.get("handle");
+  const inviteCode = searchParams.get("invite");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -41,8 +42,12 @@ export default function SignUpPage() {
         throw new Error("Failed to create account");
       }
 
-      // Redirect to onboarding with the handle
-      router.push(`/onboarding${claimedHandle ? `?handle=${claimedHandle}` : ""}`);
+      // Redirect to onboarding with the handle and invite code
+      const params = new URLSearchParams();
+      if (claimedHandle) params.set("handle", claimedHandle);
+      if (inviteCode) params.set("invite", inviteCode);
+      const queryString = params.toString();
+      router.push(`/onboarding${queryString ? `?${queryString}` : ""}`);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
