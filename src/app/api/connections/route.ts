@@ -103,7 +103,7 @@ export async function POST(request: Request) {
 
     if (!result.success) {
       return NextResponse.json(
-        { error: "Invalid request", details: result.error.errors },
+        { error: "Invalid request", details: result.error.issues },
         { status: 400 }
       );
     }

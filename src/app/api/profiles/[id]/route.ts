@@ -11,6 +11,7 @@ const updateProfileSchema = z.object({
   yearsExperience: z.number().min(0).max(70).nullable().optional(),
   profilePhotoUrl: z.string().url().nullable().optional(),
   externalBookingUrl: z.string().url().nullable().optional(),
+  profileTemplate: z.enum(["classic", "ocean", "sage", "warm"]).optional(),
 });
 
 interface RouteParams {
@@ -30,7 +31,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     if (!result.success) {
       return NextResponse.json(
-        { error: "Invalid request", details: result.error.errors },
+        { error: "Invalid request", details: result.error.issues },
         { status: 400 }
       );
     }
@@ -77,6 +78,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     }
     if (result.data.externalBookingUrl !== undefined) {
       updates.external_booking_url = result.data.externalBookingUrl;
+    }
+    if (result.data.profileTemplate !== undefined) {
+      updates.profile_template = result.data.profileTemplate;
     }
 
     const { error: updateError } = await supabase

@@ -225,6 +225,15 @@ Upon approval, the blue/gradient Verified Badge appears on the doctor's public p
 - Invite Colleague
 - View Messages
 
+**Profile Theme Selection:**
+Doctors can customize their public profile's appearance by choosing from four color themes:
+- **Classic**: Clean white with brand blue accents (default)
+- **Ocean**: Soft blue professional theme
+- **Sage**: Calming green medical aesthetic
+- **Warm**: Soft cream with terracotta accents
+
+Each theme applies cohesive colors to all profile elements (avatar, badges, cards, buttons).
+
 ### 7. The Landing Page
 
 **Hero Section:**

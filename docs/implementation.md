@@ -70,6 +70,13 @@ Create the following tables in Supabase:
 - `recommendation_count` — integer, default 0
 - `connection_count` — integer, default 0
 - `view_count` — integer, default 0
+- `profile_template` — text, default 'classic' (classic, ocean, sage, warm)
+- `bio` — text (doctor's bio/about section)
+- `qualifications` — text (degrees, certifications)
+- `languages` — text (languages spoken)
+- `consultation_fee` — text (fee range)
+- `services` — text (comma-separated services offered)
+- `registration_number` — text (medical registration number)
 - `created_at` — timestamp with timezone, default now
 - `updated_at` — timestamp with timezone, default now
 
@@ -408,12 +415,19 @@ Sections:
 
 1. **Edit Profile**: Form with all editable fields (name, specialty, photo, etc.)
 
-2. **Verification**: 
+2. **Profile Theme**: Template selector with visual color swatches
+   - Four theme options: Classic, Ocean, Sage, Warm
+   - Each option shows color preview circles
+   - Clicking a theme saves immediately (no submit button needed)
+   - Toast notification confirms change
+   - Selected theme shows checkmark indicator
+
+3. **Verification**:
    - If not verified: Upload section for documents (up to 3 images)
    - If pending: "Your verification is under review" message
    - If verified: "You are verified" with badge
 
-3. **Account**: Link to Clerk's user profile for password changes, etc.
+4. **Account**: Link to Clerk's user profile for password changes, etc.
 
 ### Step 6.9: Create the Verification Upload API
 

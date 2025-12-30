@@ -14,6 +14,7 @@ import {
   UserPlus,
   BadgeCheck,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { InviteDialog } from "./invite-dialog";
 
@@ -23,18 +24,18 @@ interface Profile {
   handle: string;
   specialty: string | null;
   profile_photo_url: string | null;
-  is_verified: boolean;
+  is_verified: boolean | null;
 }
 
 interface Connection {
   id: string;
-  connectedAt: string;
+  connectedAt: string | null;
   profile: Profile;
 }
 
 interface PendingRequest {
   id: string;
-  created_at: string;
+  created_at: string | null;
   requester: Profile;
 }
 
@@ -60,10 +61,19 @@ export function ConnectionsList({
       });
 
       if (response.ok) {
+        toast.success(
+          action === "accept"
+            ? "Connection accepted! You are now connected."
+            : "Connection request declined."
+        );
         router.refresh();
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Failed to process request");
       }
     } catch (error) {
       console.error("Error processing request:", error);
+      toast.error("Failed to process request");
     } finally {
       setProcessingId(null);
     }
@@ -115,11 +125,13 @@ export function ConnectionsList({
                   <p className="text-sm text-slate-500 truncate">
                     {request.requester.specialty || "Medical Professional"}
                   </p>
-                  <p className="text-xs text-slate-400">
-                    {formatDistanceToNow(new Date(request.created_at), {
-                      addSuffix: true,
-                    })}
-                  </p>
+                  {request.created_at && (
+                    <p className="text-xs text-slate-400">
+                      {formatDistanceToNow(new Date(request.created_at), {
+                        addSuffix: true,
+                      })}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex gap-2">

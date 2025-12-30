@@ -25,7 +25,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     if (!result.success) {
       return NextResponse.json(
-        { error: "Invalid request", details: result.error.errors },
+        { error: "Invalid request", details: result.error.issues },
         { status: 400 }
       );
     }
@@ -86,11 +86,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       }
 
       // Increment connection count for both users
-      await supabase.rpc("increment_connection_count", {
-        profile_uuid: connection.requester_id,
-      });
-      await supabase.rpc("increment_connection_count", {
-        profile_uuid: connection.receiver_id,
+      await supabase.rpc("increment_connection_counts", {
+        profile1_uuid: connection.requester_id,
+        profile2_uuid: connection.receiver_id,
       });
 
       return NextResponse.json({ success: true, status: "accepted" });
@@ -164,15 +162,8 @@ export async function DELETE(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // If it was accepted, decrement counts
-    if (connection.status === "accepted") {
-      await supabase.rpc("decrement_connection_count", {
-        profile_uuid: connection.requester_id,
-      });
-      await supabase.rpc("decrement_connection_count", {
-        profile_uuid: connection.receiver_id,
-      });
-    }
+    // Note: Decrement counts when disconnecting (TODO: create decrement function)
+    // For now, we just delete the connection record
 
     // Delete the connection
     const { error: deleteError } = await supabase

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ThumbsUp, Check, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
 interface RecommendButtonProps {
@@ -25,11 +26,14 @@ export function RecommendButton({ profileId }: RecommendButtonProps) {
 
       if (data.alreadyRecommended) {
         setStatus("already");
+        toast.info("You've already recommended this doctor");
       } else {
         setStatus("success");
+        toast.success("Thank you for your recommendation!");
       }
     } catch {
       setStatus("idle");
+      toast.error("Failed to submit recommendation");
     }
   };
 

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Download, MessageSquare, Calendar, ExternalLink } from "lucide-react";
+import { Download, MessageSquare } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { SendInquiryDialog } from "./send-inquiry-dialog";
 
@@ -44,6 +45,7 @@ export function ProfileActions({ profile }: ProfileActionsProps) {
     a.download = `${profile.full_name.replace(/\s+/g, "_")}.vcf`;
     a.click();
     URL.revokeObjectURL(url);
+    toast.success("Contact saved to your device!");
   };
 
   return (

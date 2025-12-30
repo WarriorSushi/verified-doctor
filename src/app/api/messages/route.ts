@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error: "Validation failed",
-          details: result.error.errors[0]?.message || "Invalid data",
+          details: result.error.issues[0]?.message || "Invalid data",
         },
         { status: 400 }
       );

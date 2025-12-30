@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           available: false,
-          error: result.error.errors[0]?.message || "Invalid handle format",
+          error: result.error.issues[0]?.message || "Invalid handle format",
         },
         { status: 400 }
       );

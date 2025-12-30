@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Loader2, Send, Check } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -57,9 +58,12 @@ export function SendInquiryDialog({
       }
 
       setStatus("success");
+      toast.success("Message sent successfully!");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      const message = err instanceof Error ? err.message : "Something went wrong";
+      setError(message);
       setStatus("error");
+      toast.error(message);
     }
   };
 

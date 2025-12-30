@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Save, Upload, AlertCircle } from "lucide-react";
+import { Loader2, Save, Check, Palette } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { VerificationUpload } from "./verification-upload";
+import { cn } from "@/lib/utils";
 
 interface Profile {
   id: string;
@@ -17,9 +20,37 @@ interface Profile {
   years_experience: number | null;
   profile_photo_url: string | null;
   external_booking_url: string | null;
-  is_verified: boolean;
-  verification_status: string;
+  is_verified: boolean | null;
+  verification_status: string | null;
+  profile_template: string | null;
 }
+
+const TEMPLATES = [
+  {
+    id: "classic",
+    name: "Classic",
+    description: "Clean white with brand blue accents",
+    colors: ["#FFFFFF", "#0099F7", "#F8FAFC"],
+  },
+  {
+    id: "ocean",
+    name: "Ocean",
+    description: "Soft blue professional theme",
+    colors: ["#F8FCFE", "#0077B6", "#90E0EF"],
+  },
+  {
+    id: "sage",
+    name: "Sage",
+    description: "Calming green medical aesthetic",
+    colors: ["#F9FBF9", "#4A7C59", "#A8D5BA"],
+  },
+  {
+    id: "warm",
+    name: "Warm",
+    description: "Soft cream with terracotta accents",
+    colors: ["#FFFBF7", "#C4784F", "#E8D5C4"],
+  },
+];
 
 interface ProfileSettingsProps {
   profile: Profile;
@@ -43,6 +74,34 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
   const [externalBookingUrl, setExternalBookingUrl] = useState(
     profile.external_booking_url || ""
   );
+  const [selectedTemplate, setSelectedTemplate] = useState(
+    profile.profile_template || "classic"
+  );
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+
+  const handleTemplateChange = async (templateId: string) => {
+    setSelectedTemplate(templateId);
+    setIsSavingTemplate(true);
+    try {
+      const response = await fetch(`/api/profiles/${profile.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileTemplate: templateId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update template");
+      }
+
+      toast.success("Template updated!");
+      router.refresh();
+    } catch {
+      toast.error("Failed to update template");
+      setSelectedTemplate(profile.profile_template || "classic");
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,9 +129,12 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
       }
 
       setSuccess(true);
+      toast.success("Profile updated successfully!");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      const message = err instanceof Error ? err.message : "Something went wrong";
+      setError(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -191,6 +253,63 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
         </form>
       </div>
 
+      {/* Template Selection */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Palette className="w-5 h-5 text-slate-500" />
+          <h2 className="text-lg font-semibold text-slate-900">
+            Profile Theme
+          </h2>
+        </div>
+        <p className="text-sm text-slate-500 mb-4">
+          Choose how your public profile looks to visitors
+        </p>
+
+        <div className="grid sm:grid-cols-2 gap-3">
+          {TEMPLATES.map((template) => (
+            <button
+              key={template.id}
+              type="button"
+              onClick={() => handleTemplateChange(template.id)}
+              disabled={isSavingTemplate}
+              className={cn(
+                "relative p-4 rounded-xl border-2 text-left transition-all hover:shadow-md",
+                selectedTemplate === template.id
+                  ? "border-[#0099F7] bg-blue-50/50"
+                  : "border-slate-200 hover:border-slate-300"
+              )}
+            >
+              {selectedTemplate === template.id && (
+                <div className="absolute top-3 right-3 w-5 h-5 bg-[#0099F7] rounded-full flex items-center justify-center">
+                  <Check className="w-3 h-3 text-white" />
+                </div>
+              )}
+
+              {/* Color preview */}
+              <div className="flex gap-1.5 mb-3">
+                {template.colors.map((color, i) => (
+                  <div
+                    key={i}
+                    className="w-6 h-6 rounded-full border border-slate-200"
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+
+              <p className="font-medium text-slate-900">{template.name}</p>
+              <p className="text-xs text-slate-500">{template.description}</p>
+            </button>
+          ))}
+        </div>
+
+        {isSavingTemplate && (
+          <p className="text-sm text-slate-500 mt-3 flex items-center gap-2">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            Saving...
+          </p>
+        )}
+      </div>
+
       {/* Verification Section */}
       <div
         id="verification"
@@ -200,48 +319,11 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
           Verification
         </h2>
 
-        {profile.is_verified ? (
-          <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-            <p className="text-emerald-700 font-medium">
-              ✓ Your profile is verified
-            </p>
-            <p className="text-sm text-emerald-600 mt-1">
-              The verified badge is visible on your public profile.
-            </p>
-          </div>
-        ) : profile.verification_status === "pending" ? (
-          <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-            <p className="text-amber-700 font-medium">
-              Verification under review
-            </p>
-            <p className="text-sm text-amber-600 mt-1">
-              We're reviewing your documents. This usually takes 1-2 business
-              days.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-slate-500 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-medium text-slate-700">
-                    Get your verified badge
-                  </p>
-                  <p className="text-sm text-slate-500 mt-1">
-                    Upload your medical registration certificate to get the
-                    verified badge and build trust with patients.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <Button variant="outline" disabled>
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Documents (Coming Soon)
-            </Button>
-          </div>
-        )}
+        <VerificationUpload
+          profileId={profile.id}
+          currentStatus={profile.verification_status}
+          isVerified={profile.is_verified}
+        />
       </div>
 
       {/* Logout */}

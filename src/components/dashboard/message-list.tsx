@@ -17,10 +17,10 @@ interface Message {
   sender_name: string;
   sender_phone: string;
   message_content: string;
-  is_read: boolean;
+  is_read: boolean | null;
   reply_content: string | null;
   reply_sent_at: string | null;
-  created_at: string;
+  created_at: string | null;
 }
 
 interface MessageListProps {
@@ -127,14 +127,16 @@ export function MessageList({ messages, profileId }: MessageListProps) {
               <p className="text-slate-600 text-sm line-clamp-2">
                 {message.message_content}
               </p>
-              <div className="flex items-center gap-4 mt-2 text-xs text-slate-400">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {formatDistanceToNow(new Date(message.created_at), {
-                    addSuffix: true,
-                  })}
-                </span>
-              </div>
+              {message.created_at && (
+                <div className="flex items-center gap-4 mt-2 text-xs text-slate-400">
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {formatDistanceToNow(new Date(message.created_at), {
+                      addSuffix: true,
+                    })}
+                  </span>
+                </div>
+              )}
             </div>
           </button>
         ))}
@@ -165,11 +167,13 @@ export function MessageList({ messages, profileId }: MessageListProps) {
                 <p className="text-slate-700 whitespace-pre-wrap">
                   {selectedMessage.message_content}
                 </p>
-                <p className="text-xs text-slate-400 mt-2">
-                  {formatDistanceToNow(new Date(selectedMessage.created_at), {
-                    addSuffix: true,
-                  })}
-                </p>
+                {selectedMessage.created_at && (
+                  <p className="text-xs text-slate-400 mt-2">
+                    {formatDistanceToNow(new Date(selectedMessage.created_at), {
+                      addSuffix: true,
+                    })}
+                  </p>
+                )}
               </div>
 
               {/* Reply Section */}

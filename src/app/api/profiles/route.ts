@@ -27,6 +27,14 @@ const createProfileSchema = z.object({
   profilePhotoUrl: z.string().url().optional().or(z.literal("")),
   externalBookingUrl: z.string().url().optional().or(z.literal("")),
   inviteCode: z.string().optional(),
+  // New enhanced fields
+  bio: z.string().max(500).optional(),
+  qualifications: z.string().max(200).optional(),
+  languages: z.string().max(200).optional(),
+  registrationNumber: z.string().max(100).optional(),
+  consultationFee: z.string().max(50).optional(),
+  services: z.string().max(500).optional(),
+  profileTemplate: z.enum(["classic", "modern", "minimal", "professional"]).optional(),
 });
 
 export async function POST(request: Request) {
@@ -44,7 +52,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error: "Validation failed",
-          details: result.error.errors[0]?.message || "Invalid data",
+          details: result.error.issues[0]?.message || "Invalid data",
         },
         { status: 400 }
       );
@@ -60,6 +68,13 @@ export async function POST(request: Request) {
       profilePhotoUrl,
       externalBookingUrl,
       inviteCode,
+      bio,
+      qualifications,
+      languages,
+      registrationNumber,
+      consultationFee,
+      services,
+      profileTemplate,
     } = result.data;
 
     // Check if handle is banned
@@ -113,6 +128,13 @@ export async function POST(request: Request) {
         years_experience: yearsExperience || null,
         profile_photo_url: profilePhotoUrl || null,
         external_booking_url: externalBookingUrl || null,
+        bio: bio || null,
+        qualifications: qualifications || null,
+        languages: languages || null,
+        registration_number: registrationNumber || null,
+        consultation_fee: consultationFee || null,
+        services: services || null,
+        profile_template: profileTemplate || "classic",
         is_verified: false,
         verification_status: "none",
         recommendation_count: 0,
@@ -168,11 +190,9 @@ export async function POST(request: Request) {
             .eq("id", invite.id);
 
           // Increment connection counts for both
-          await supabase.rpc("increment_connection_count", {
-            profile_uuid: invite.inviter_profile_id,
-          });
-          await supabase.rpc("increment_connection_count", {
-            profile_uuid: profile.id,
+          await supabase.rpc("increment_connection_counts", {
+            profile1_uuid: invite.inviter_profile_id,
+            profile2_uuid: profile.id,
           });
 
           connectedWith = invite.inviter;

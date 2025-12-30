@@ -12,10 +12,19 @@ import {
   Upload,
   X,
   ExternalLink,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+
+const TEMPLATES = [
+  { id: "classic", name: "Classic", description: "Clean and professional" },
+  { id: "modern", name: "Modern", description: "Bold with gradients" },
+  { id: "minimal", name: "Minimal", description: "Simple and elegant" },
+  { id: "professional", name: "Professional", description: "Corporate style" },
+];
 
 export default function OnboardingPage() {
   const searchParams = useSearchParams();
@@ -27,17 +36,30 @@ export default function OnboardingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Form state
+  // Step 1: Basic Info
   const [handle, setHandle] = useState(prefilledHandle || "");
   const [fullName, setFullName] = useState("");
+
+  // Step 2: Professional Details
   const [specialty, setSpecialty] = useState("");
+  const [qualifications, setQualifications] = useState("");
+  const [yearsExperience, setYearsExperience] = useState("");
+  const [registrationNumber, setRegistrationNumber] = useState("");
+
+  // Step 3: Practice Details
   const [clinicName, setClinicName] = useState("");
   const [clinicLocation, setClinicLocation] = useState("");
-  const [yearsExperience, setYearsExperience] = useState("");
-  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
-  const [externalBookingUrl, setExternalBookingUrl] = useState("");
+  const [languages, setLanguages] = useState("");
+  const [consultationFee, setConsultationFee] = useState("");
+  const [services, setServices] = useState("");
 
-  // Check if handle is available
+  // Step 4: Photo, Bio & Template
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [bio, setBio] = useState("");
+  const [externalBookingUrl, setExternalBookingUrl] = useState("");
+  const [profileTemplate, setProfileTemplate] = useState("classic");
+
+  // Handle availability check
   const [handleStatus, setHandleStatus] = useState<
     "idle" | "checking" | "available" | "taken"
   >(prefilledHandle ? "available" : "idle");
@@ -70,7 +92,6 @@ export default function OnboardingPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // For now, create a local URL (in production, upload to Supabase Storage)
     const reader = new FileReader();
     reader.onloadend = () => {
       setProfilePhoto(reader.result as string);
@@ -91,11 +112,18 @@ export default function OnboardingPage() {
           handle: handle.toLowerCase().trim(),
           fullName,
           specialty,
+          qualifications: qualifications || undefined,
+          yearsExperience: yearsExperience ? parseInt(yearsExperience) : undefined,
+          registrationNumber: registrationNumber || undefined,
           clinicName: clinicName || undefined,
           clinicLocation: clinicLocation || undefined,
-          yearsExperience: yearsExperience ? parseInt(yearsExperience) : undefined,
+          languages: languages || undefined,
+          consultationFee: consultationFee || undefined,
+          services: services || undefined,
           profilePhotoUrl: profilePhoto || undefined,
+          bio: bio || undefined,
           externalBookingUrl: externalBookingUrl || undefined,
+          profileTemplate,
           inviteCode: inviteCode || undefined,
         }),
       });
@@ -106,7 +134,6 @@ export default function OnboardingPage() {
         throw new Error(data.error || "Failed to create profile");
       }
 
-      // Redirect to dashboard with success message
       router.push(`/dashboard?new=true&handle=${handle}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -150,7 +177,7 @@ export default function OnboardingPage() {
 
         {/* Progress */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          {[1, 2, 3].map((s) => (
+          {[1, 2, 3, 4].map((s) => (
             <div
               key={s}
               className={`w-3 h-3 rounded-full transition-colors ${
@@ -177,7 +204,7 @@ export default function OnboardingPage() {
                     Let&apos;s set up your profile
                   </h1>
                   <p className="text-slate-600">
-                    This takes less than 2 minutes
+                    This takes less than 3 minutes
                   </p>
                 </div>
 
@@ -250,7 +277,7 @@ export default function OnboardingPage() {
               </>
             )}
 
-            {/* Step 2: Professional Info */}
+            {/* Step 2: Professional Details */}
             {step === 2 && (
               <>
                 <div className="text-center mb-8">
@@ -258,65 +285,76 @@ export default function OnboardingPage() {
                     Professional Details
                   </h1>
                   <p className="text-slate-600">
-                    Help patients find the right specialist
+                    Your qualifications and expertise
                   </p>
                 </div>
 
-                <div className="space-y-6">
-                  {/* Specialty */}
+                <div className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="specialty">Specialty</Label>
+                    <Label htmlFor="specialty">Specialty *</Label>
                     <Input
                       id="specialty"
                       type="text"
                       value={specialty}
                       onChange={(e) => setSpecialty(e.target.value)}
-                      placeholder="e.g. Cardiologist, General Physician, Dermatologist"
+                      placeholder="e.g. Cardiologist, Dermatologist, Pediatrician"
                       className="h-12"
                     />
                   </div>
 
-                  {/* Years Experience */}
                   <div className="space-y-2">
-                    <Label htmlFor="yearsExperience">
-                      Years of Experience (optional)
+                    <Label htmlFor="qualifications">
+                      Qualifications
+                      <span className="ml-1 text-slate-400 font-normal text-sm">
+                        (optional)
+                      </span>
                     </Label>
                     <Input
-                      id="yearsExperience"
-                      type="number"
-                      min="0"
-                      max="70"
-                      value={yearsExperience}
-                      onChange={(e) => setYearsExperience(e.target.value)}
-                      placeholder="e.g. 12"
+                      id="qualifications"
+                      type="text"
+                      value={qualifications}
+                      onChange={(e) => setQualifications(e.target.value)}
+                      placeholder="e.g. MBBS, MD (Cardiology), DM"
                       className="h-12"
                     />
                   </div>
 
-                  {/* Clinic Name */}
-                  <div className="space-y-2">
-                    <Label htmlFor="clinicName">Clinic/Hospital Name (optional)</Label>
-                    <Input
-                      id="clinicName"
-                      type="text"
-                      value={clinicName}
-                      onChange={(e) => setClinicName(e.target.value)}
-                      placeholder="HeartCare Clinic"
-                      className="h-12"
-                    />
-                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="yearsExperience">
+                        Experience
+                        <span className="ml-1 text-slate-400 font-normal text-sm">
+                          (years)
+                        </span>
+                      </Label>
+                      <Input
+                        id="yearsExperience"
+                        type="number"
+                        min="0"
+                        max="70"
+                        value={yearsExperience}
+                        onChange={(e) => setYearsExperience(e.target.value)}
+                        placeholder="12"
+                        className="h-12"
+                      />
+                    </div>
 
-                  {/* Clinic Location */}
-                  <div className="space-y-2">
-                    <Label htmlFor="clinicLocation">Location (optional)</Label>
-                    <Input
-                      id="clinicLocation"
-                      type="text"
-                      value={clinicLocation}
-                      onChange={(e) => setClinicLocation(e.target.value)}
-                      placeholder="Mumbai, India"
-                      className="h-12"
-                    />
+                    <div className="space-y-2">
+                      <Label htmlFor="registrationNumber">
+                        Reg. Number
+                        <span className="ml-1 text-slate-400 font-normal text-sm">
+                          (optional)
+                        </span>
+                      </Label>
+                      <Input
+                        id="registrationNumber"
+                        type="text"
+                        value={registrationNumber}
+                        onChange={(e) => setRegistrationNumber(e.target.value)}
+                        placeholder="MCI/12345"
+                        className="h-12"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -342,22 +380,124 @@ export default function OnboardingPage() {
               </>
             )}
 
-            {/* Step 3: Photo & Links */}
+            {/* Step 3: Practice Details */}
             {step === 3 && (
               <>
                 <div className="text-center mb-8">
                   <h1 className="text-2xl font-bold text-slate-900 mb-2">
-                    Final touches
+                    Practice Details
                   </h1>
                   <p className="text-slate-600">
-                    Add a photo and booking link
+                    Where and how patients can reach you
+                  </p>
+                </div>
+
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="clinicName">Clinic/Hospital Name</Label>
+                    <Input
+                      id="clinicName"
+                      type="text"
+                      value={clinicName}
+                      onChange={(e) => setClinicName(e.target.value)}
+                      placeholder="HeartCare Clinic"
+                      className="h-12"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="clinicLocation">Location</Label>
+                    <Input
+                      id="clinicLocation"
+                      type="text"
+                      value={clinicLocation}
+                      onChange={(e) => setClinicLocation(e.target.value)}
+                      placeholder="Bandra West, Mumbai"
+                      className="h-12"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="languages">Languages</Label>
+                      <Input
+                        id="languages"
+                        type="text"
+                        value={languages}
+                        onChange={(e) => setLanguages(e.target.value)}
+                        placeholder="English, Hindi"
+                        className="h-12"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="consultationFee">Consultation Fee</Label>
+                      <Input
+                        id="consultationFee"
+                        type="text"
+                        value={consultationFee}
+                        onChange={(e) => setConsultationFee(e.target.value)}
+                        placeholder="₹500-1000"
+                        className="h-12"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="services">
+                      Services Offered
+                      <span className="ml-1 text-slate-400 font-normal text-sm">
+                        (comma separated)
+                      </span>
+                    </Label>
+                    <Input
+                      id="services"
+                      type="text"
+                      value={services}
+                      onChange={(e) => setServices(e.target.value)}
+                      placeholder="ECG, Echocardiography, Stress Test"
+                      className="h-12"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-4 mt-8">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setStep(2)}
+                    className="flex-1 h-12"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setStep(4)}
+                    className="flex-1 h-12 bg-gradient-to-r from-[#0099F7] to-[#0080CC] hover:from-[#0088E0] hover:to-[#0070B8] text-white font-semibold"
+                  >
+                    Continue
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {/* Step 4: Photo, Bio & Template */}
+            {step === 4 && (
+              <>
+                <div className="text-center mb-8">
+                  <h1 className="text-2xl font-bold text-slate-900 mb-2">
+                    Final Touches
+                  </h1>
+                  <p className="text-slate-600">
+                    Add your photo and choose a style
                   </p>
                 </div>
 
                 <div className="space-y-6">
                   {/* Profile Photo */}
                   <div className="space-y-2">
-                    <Label>Profile Photo (optional)</Label>
+                    <Label>Profile Photo</Label>
                     <div className="flex items-center gap-4">
                       <div className="relative w-20 h-20 rounded-full bg-slate-100 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden">
                         {profilePhoto ? (
@@ -406,12 +546,34 @@ export default function OnboardingPage() {
                     </div>
                   </div>
 
-                  {/* External Booking URL */}
+                  {/* Bio */}
+                  <div className="space-y-2">
+                    <Label htmlFor="bio">
+                      Short Bio
+                      <span className="ml-1 text-slate-400 font-normal text-sm">
+                        (optional)
+                      </span>
+                    </Label>
+                    <Textarea
+                      id="bio"
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      placeholder="A brief introduction about yourself and your practice..."
+                      rows={3}
+                      maxLength={500}
+                      className="resize-none"
+                    />
+                    <p className="text-xs text-slate-400 text-right">
+                      {bio.length}/500
+                    </p>
+                  </div>
+
+                  {/* Booking URL */}
                   <div className="space-y-2">
                     <Label htmlFor="bookingUrl">
-                      Booking Link (optional)
-                      <span className="ml-2 text-slate-400 font-normal">
-                        Practo, Calendly, etc.
+                      Booking Link
+                      <span className="ml-1 text-slate-400 font-normal text-sm">
+                        (Practo, Calendly, etc.)
                       </span>
                     </Label>
                     <div className="relative">
@@ -426,6 +588,35 @@ export default function OnboardingPage() {
                       />
                     </div>
                   </div>
+
+                  {/* Template Selection */}
+                  <div className="space-y-3">
+                    <Label className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-[#0099F7]" />
+                      Profile Template
+                    </Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {TEMPLATES.map((template) => (
+                        <button
+                          key={template.id}
+                          type="button"
+                          onClick={() => setProfileTemplate(template.id)}
+                          className={`p-4 rounded-xl border-2 text-left transition-all ${
+                            profileTemplate === template.id
+                              ? "border-[#0099F7] bg-blue-50/50"
+                              : "border-slate-200 hover:border-slate-300"
+                          }`}
+                        >
+                          <p className="font-medium text-slate-900">
+                            {template.name}
+                          </p>
+                          <p className="text-sm text-slate-500">
+                            {template.description}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 {error && (
@@ -438,7 +629,7 @@ export default function OnboardingPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setStep(2)}
+                    onClick={() => setStep(3)}
                     className="flex-1 h-12"
                   >
                     Back

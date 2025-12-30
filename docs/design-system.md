@@ -52,6 +52,25 @@ primary-dark: #0080CC
 accent: #A4FDFF
 ```
 
+### Profile Template Color Themes
+
+Doctors can choose from four distinct color themes for their public profile:
+
+| Theme | Primary | Accent | Background | Description |
+|-------|---------|--------|------------|-------------|
+| **Classic** | `#0099F7` | `#A4FDFF` | `#FFFFFF` | Clean white with brand blue accents |
+| **Ocean** | `#0077B6` | `#90E0EF` | `#F8FCFE` | Soft blue professional theme |
+| **Sage** | `#4A7C59` | `#A8D5BA` | `#F9FBF9` | Calming green medical aesthetic |
+| **Warm** | `#C4784F` | `#E8D5C4` | `#FFFBF7` | Soft cream with terracotta accents |
+
+Each theme updates all profile elements cohesively:
+- Avatar background and decorative icon
+- Specialty text color
+- Credential badges
+- Info cards and service tags
+- Recommendation section
+- Action buttons
+
 ---
 
 ## Typography
