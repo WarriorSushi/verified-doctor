@@ -116,6 +116,8 @@ export async function POST(request: Request) {
     }
 
     // Create the profile
+    // Note: Database has unique constraints on both 'handle' and 'user_id'
+    // We catch constraint violations to handle race conditions
     const { data: profile, error } = await supabase
       .from("profiles")
       .insert({
@@ -146,6 +148,30 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error("Database error:", error);
+
+      // Handle unique constraint violations (race conditions)
+      // Postgres error code 23505 = unique_violation
+      if (error.code === "23505") {
+        // Check which constraint was violated
+        if (error.message?.includes("handle")) {
+          return NextResponse.json(
+            { error: "This handle was just claimed by someone else. Please try a different one." },
+            { status: 409 }
+          );
+        }
+        if (error.message?.includes("user_id")) {
+          return NextResponse.json(
+            { error: "You already have a profile" },
+            { status: 409 }
+          );
+        }
+        // Generic unique constraint violation
+        return NextResponse.json(
+          { error: "This handle is already taken" },
+          { status: 409 }
+        );
+      }
+
       return NextResponse.json(
         { error: "Failed to create profile" },
         { status: 500 }

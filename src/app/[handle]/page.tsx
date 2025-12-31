@@ -122,6 +122,24 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     .or(`requester_id.eq.${extendedProfile.id},receiver_id.eq.${extendedProfile.id}`)
     .eq("status", "accepted");
 
+  // Fetch inviter info (if this profile was created via invite)
+  const { data: inviteData } = await supabase
+    .from("invites")
+    .select(`
+      inviter:profiles!invites_inviter_profile_id_fkey(
+        id, full_name, specialty, handle
+      )
+    `)
+    .eq("used_by_profile_id", extendedProfile.id)
+    .single();
+
+  const invitedBy = inviteData?.inviter as {
+    id: string;
+    full_name: string;
+    specialty: string | null;
+    handle: string;
+  } | null;
+
   // Extract connected doctors (exclude self)
   const connectedDoctors = (connections || []).map((conn) => {
     if (conn.requester_id === extendedProfile.id) {
@@ -141,14 +159,14 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   switch (template) {
     case "ocean":
-      return <OceanTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} />;
+      return <OceanTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />;
     case "sage":
-      return <SageTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} />;
+      return <SageTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />;
     case "warm":
-      return <WarmTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} />;
+      return <WarmTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />;
     case "classic":
     default:
-      return <ClassicTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} />;
+      return <ClassicTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />;
   }
 }
 

@@ -11,6 +11,7 @@ import {
   ExternalLink,
   AlertCircle,
   CheckCircle,
+  UserPlus,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getAuth } from "@/lib/auth";
@@ -18,6 +19,8 @@ import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/dashboard/copy-button";
 import { formatViewCount } from "@/lib/format-metrics";
 import { ProfileCompletionBar } from "@/components/dashboard/profile-completion-bar";
+import { InviteDialog } from "@/components/dashboard/invite-dialog";
+import { InvitePromptCard } from "@/components/dashboard/invite-prompt-card";
 
 export default async function DashboardPage() {
   const { userId } = await getAuth();
@@ -202,9 +205,20 @@ export default async function DashboardPage() {
                 ) : null}
               </Link>
             </Button>
+            <InviteDialog
+              trigger={
+                <Button variant="outline" size="sm" className="w-full justify-start text-xs sm:text-sm">
+                  <UserPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                  Invite Colleague
+                </Button>
+              }
+            />
           </div>
         </div>
       </div>
+
+      {/* Invite Prompt Card - Show if low connections */}
+      <InvitePromptCard connectionCount={profile.connection_count || 0} />
 
       {/* Profile URL */}
       <div className="bg-gradient-to-r from-[#0099F7]/5 to-[#A4FDFF]/10 rounded-xl border border-[#0099F7]/20 p-4 sm:p-6">

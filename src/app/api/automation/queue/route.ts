@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAuth } from "@/lib/auth";
+import { verifyAdminSession } from "@/lib/admin-auth";
 import { z } from "zod";
 
 const queueEmailSchema = z.object({
@@ -9,6 +10,9 @@ const queueEmailSchema = z.object({
   scheduledFor: z.string().datetime().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
+
+// Allowed status values to prevent injection
+const ALLOWED_STATUSES = ["pending", "sent", "cancelled", "failed"] as const;
 
 // GET - List queued emails (admin can see all, user sees their own)
 export async function GET(request: Request) {
@@ -20,8 +24,13 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get("status"); // pending, sent, cancelled, failed
+    const rawStatus = searchParams.get("status"); // pending, sent, cancelled, failed
     const profileId = searchParams.get("profileId");
+
+    // Validate status if provided
+    const status = rawStatus && ALLOWED_STATUSES.includes(rawStatus as typeof ALLOWED_STATUSES[number])
+      ? rawStatus
+      : null;
 
     const supabase = await createClient();
 
@@ -32,6 +41,23 @@ export async function GET(request: Request) {
       .eq("user_id", userId)
       .single();
 
+    // Check if user is admin
+    const isAdmin = await verifyAdminSession();
+
+    // SECURITY: If a profileId is specified and it's not the user's own profile,
+    // only allow if user is an admin
+    if (profileId && profile && profileId !== profile.id && !isAdmin) {
+      return NextResponse.json(
+        { error: "Forbidden: You can only view your own queued emails" },
+        { status: 403 }
+      );
+    }
+
+    // If no profile found and no admin access, return empty
+    if (!profile && !isAdmin) {
+      return NextResponse.json({ queuedEmails: [] });
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let query = (supabase as any)
       .from("automation_email_queue")
@@ -41,11 +67,12 @@ export async function GET(request: Request) {
       `)
       .order("scheduled_for", { ascending: true });
 
-    // If profileId is specified, filter by it (admin use)
-    if (profileId) {
+    // Filter by profile - admins can query any profile, users only their own
+    if (profileId && isAdmin) {
+      // Admin can view any profile's queue
       query = query.eq("profile_id", profileId);
     } else if (profile) {
-      // Otherwise, regular users only see their own
+      // Regular users can only see their own queued emails
       query = query.eq("profile_id", profile.id);
     }
 
@@ -87,6 +114,24 @@ export async function POST(request: Request) {
       queueEmailSchema.parse(body);
 
     const supabase = await createClient();
+
+    // Get user's profile to verify ownership
+    const { data: userProfile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("user_id", userId)
+      .single();
+
+    // Check if user is admin
+    const isAdmin = await verifyAdminSession();
+
+    // SECURITY: Only allow queuing emails for own profile unless admin
+    if (!isAdmin && (!userProfile || userProfile.id !== profileId)) {
+      return NextResponse.json(
+        { error: "Forbidden: You can only queue emails for your own profile" },
+        { status: 403 }
+      );
+    }
 
     // Verify template exists
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

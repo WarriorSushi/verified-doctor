@@ -1,16 +1,42 @@
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "drsyedirfan93@gmail.com";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "adminadmin";
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.ADMIN_JWT_SECRET || "admin-secret-key-change-in-production"
-);
+// Production security: These MUST be set in environment variables
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET;
+
+// Validate required environment variables at startup
+function validateEnvVars() {
+  const missing: string[] = [];
+  if (!ADMIN_EMAIL) missing.push("ADMIN_EMAIL");
+  if (!ADMIN_PASSWORD) missing.push("ADMIN_PASSWORD");
+  if (!ADMIN_JWT_SECRET) missing.push("ADMIN_JWT_SECRET");
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required admin environment variables: ${missing.join(", ")}. ` +
+      `Please set these in your .env.local or production environment.`
+    );
+  }
+}
+
+// Call validation when module loads (will throw if vars missing)
+if (typeof window === "undefined") {
+  validateEnvVars();
+}
+
+const JWT_SECRET = new TextEncoder().encode(ADMIN_JWT_SECRET);
 
 export async function validateAdminCredentials(
   email: string,
   password: string
 ): Promise<boolean> {
+  // Extra safety check in case validation was somehow bypassed
+  if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+    console.error("Admin credentials not configured");
+    return false;
+  }
   return email === ADMIN_EMAIL && password === ADMIN_PASSWORD;
 }
 

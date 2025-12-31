@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { uploadProfilePhoto } from "@/lib/upload";
+import { getUser } from "@/lib/auth/client";
 
 const TEMPLATES = [
   {
@@ -71,6 +73,8 @@ function OnboardingForm() {
 
   // Step 4: Photo, Bio & Template
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [bio, setBio] = useState("");
   const [externalBookingUrl, setExternalBookingUrl] = useState("");
   const [profileTemplate, setProfileTemplate] = useState("classic");
@@ -104,15 +108,37 @@ function OnboardingForm() {
     }
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setProfilePhoto(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    setIsUploadingPhoto(true);
+    setError("");
+
+    try {
+      // Show preview immediately using data URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePhoto(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      // Get user ID for upload
+      const { data: userData } = await getUser();
+      if (!userData?.user?.id) {
+        throw new Error("Please sign in to upload a photo");
+      }
+
+      // Upload to Supabase Storage
+      const publicUrl = await uploadProfilePhoto(file, userData.user.id);
+      setProfilePhotoUrl(publicUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload photo");
+      setProfilePhoto(null);
+      setProfilePhotoUrl(null);
+    } finally {
+      setIsUploadingPhoto(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -136,7 +162,7 @@ function OnboardingForm() {
           languages: languages || undefined,
           consultationFee: consultationFee || undefined,
           services: services || undefined,
-          profilePhotoUrl: profilePhoto || undefined,
+          profilePhotoUrl: profilePhotoUrl || undefined,
           bio: bio || undefined,
           externalBookingUrl: externalBookingUrl || undefined,
           profileTemplate,
@@ -150,7 +176,7 @@ function OnboardingForm() {
         throw new Error(data.error || "Failed to create profile");
       }
 
-      router.push(`/dashboard?new=true&handle=${handle}`);
+      router.push(`/onboarding/success?handle=${handle}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -523,6 +549,8 @@ function OnboardingForm() {
                             fill
                             className="object-cover"
                           />
+                        ) : isUploadingPhoto ? (
+                          <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400 animate-spin" />
                         ) : (
                           <Upload className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" />
                         )}
@@ -532,6 +560,7 @@ function OnboardingForm() {
                           type="file"
                           accept="image/*"
                           onChange={handlePhotoUpload}
+                          disabled={isUploadingPhoto}
                           className="hidden"
                           id="photo-upload"
                         />
@@ -541,19 +570,23 @@ function OnboardingForm() {
                             variant="outline"
                             size="sm"
                             className="cursor-pointer text-xs sm:text-sm"
+                            disabled={isUploadingPhoto}
                             asChild
                           >
                             <span>
-                              {profilePhoto ? "Change" : "Upload"}
+                              {isUploadingPhoto ? "Uploading..." : profilePhoto ? "Change" : "Upload"}
                             </span>
                           </Button>
                         </label>
-                        {profilePhoto && (
+                        {profilePhoto && !isUploadingPhoto && (
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => setProfilePhoto(null)}
+                            onClick={() => {
+                              setProfilePhoto(null);
+                              setProfilePhotoUrl(null);
+                            }}
                             className="text-red-500 hover:text-red-600 text-xs sm:text-sm"
                           >
                             Remove

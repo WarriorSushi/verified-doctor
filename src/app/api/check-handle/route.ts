@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { isBannedHandle } from "@/lib/banned-handles";
+import {
+  getHandleCheckLimiter,
+  getClientIp,
+  checkRateLimit,
+  formatRetryAfter,
+} from "@/lib/rate-limit";
 
 const handleSchema = z.object({
   handle: z
@@ -22,6 +28,28 @@ const handleSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    // Rate limiting: 30 checks per IP per minute (prevent enumeration)
+    const ip = await getClientIp();
+    const limiter = getHandleCheckLimiter();
+    const rateLimit = await checkRateLimit(limiter, ip);
+
+    if (!rateLimit.success) {
+      const retryAfter = rateLimit.retryAfter || 60; // Default 1 minute
+      return NextResponse.json(
+        {
+          available: false,
+          error: `Too many requests. Please try again in ${formatRetryAfter(retryAfter)}.`,
+          code: "RATE_LIMITED",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": retryAfter.toString(),
+          },
+        }
+      );
+    }
+
     const body = await request.json();
     const result = handleSchema.safeParse(body);
 

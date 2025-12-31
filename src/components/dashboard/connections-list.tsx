@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { InviteDialog } from "./invite-dialog";
 
 interface Profile {
   id: string;
@@ -179,7 +178,6 @@ export function ConnectionsList({
               ({connections.length})
             </span>
           </h2>
-          <InviteDialog />
         </div>
 
         {connections.length === 0 ? (
@@ -188,17 +186,9 @@ export function ConnectionsList({
             <h3 className="font-medium text-slate-900 mb-2">
               No connections yet
             </h3>
-            <p className="text-sm text-slate-500 mb-4">
-              Invite colleagues to grow your professional network
+            <p className="text-sm text-slate-500">
+              Use the invite panel on the right to invite colleagues and grow your professional network.
             </p>
-            <InviteDialog
-              trigger={
-                <Button>
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Invite Your First Colleague
-                </Button>
-              }
-            />
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

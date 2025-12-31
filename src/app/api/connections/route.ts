@@ -29,6 +29,7 @@ export async function GET() {
     }
 
     // Get all accepted connections (where user is requester or receiver)
+    // Using filter with proper parameterization to prevent SQL injection
     const { data: connections, error } = await supabase
       .from("connections")
       .select(`
@@ -42,7 +43,7 @@ export async function GET() {
           id, full_name, handle, specialty, profile_photo_url, is_verified
         )
       `)
-      .or(`requester_id.eq.${profile.id},receiver_id.eq.${profile.id}`)
+      .or(`requester_id.eq."${profile.id}",receiver_id.eq."${profile.id}"`)
       .eq("status", "accepted")
       .order("created_at", { ascending: false });
 
@@ -130,13 +131,22 @@ export async function POST(request: Request) {
     }
 
     // Check if connection already exists
-    const { data: existingConnection } = await supabase
+    // Query both directions separately to avoid complex .or() with string interpolation
+    const { data: existingAsRequester } = await supabase
       .from("connections")
       .select("id, status")
-      .or(
-        `and(requester_id.eq.${requesterProfile.id},receiver_id.eq.${result.data.receiverId}),and(requester_id.eq.${result.data.receiverId},receiver_id.eq.${requesterProfile.id})`
-      )
+      .eq("requester_id", requesterProfile.id)
+      .eq("receiver_id", result.data.receiverId)
       .single();
+
+    const { data: existingAsReceiver } = await supabase
+      .from("connections")
+      .select("id, status")
+      .eq("requester_id", result.data.receiverId)
+      .eq("receiver_id", requesterProfile.id)
+      .single();
+
+    const existingConnection = existingAsRequester || existingAsReceiver;
 
     if (existingConnection) {
       return NextResponse.json(

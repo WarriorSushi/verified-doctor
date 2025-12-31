@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Save, Check, Palette, Power, AlertTriangle } from "lucide-react";
+import Image from "next/image";
+import { Loader2, Save, Check, Palette, Power, AlertTriangle, Upload, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { VerificationUpload } from "./verification-upload";
 import { cn } from "@/lib/utils";
+import { uploadProfilePhoto } from "@/lib/upload";
+import { getUser } from "@/lib/auth/client";
 
 interface Profile {
   id: string;
@@ -82,6 +85,12 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
   const [isFrozen, setIsFrozen] = useState(false);
   const [isTogglingFreeze, setIsTogglingFreeze] = useState(false);
 
+  // Photo upload state
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(
+    profile.profile_photo_url
+  );
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
   // Fetch freeze status on mount
   useEffect(() => {
     const fetchFreezeStatus = async () => {
@@ -119,6 +128,50 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
       toast.error("Failed to update profile status");
     } finally {
       setIsTogglingFreeze(false);
+    }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingPhoto(true);
+
+    try {
+      // Show preview immediately
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      // Get user ID for upload
+      const { data: userData } = await getUser();
+      if (!userData?.user?.id) {
+        throw new Error("Please sign in to upload a photo");
+      }
+
+      // Upload to Supabase Storage
+      const publicUrl = await uploadProfilePhoto(file, userData.user.id);
+
+      // Update profile with new photo URL
+      const response = await fetch(`/api/profiles/${profile.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profilePhotoUrl: publicUrl }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update profile photo");
+      }
+
+      toast.success("Profile photo updated!");
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload photo");
+      setProfilePhotoPreview(profile.profile_photo_url);
+    } finally {
+      setIsUploadingPhoto(false);
     }
   };
 
@@ -185,6 +238,68 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
 
   return (
     <div className="space-y-6">
+      {/* Profile Photo */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Camera className="w-5 h-5 text-slate-500" />
+          <h2 className="text-lg font-semibold text-slate-900">
+            Profile Photo
+          </h2>
+        </div>
+
+        <div className="flex items-center gap-6">
+          <div className="relative w-24 h-24 rounded-full bg-slate-100 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+            {profilePhotoPreview ? (
+              <Image
+                src={profilePhotoPreview}
+                alt="Profile"
+                fill
+                className="object-cover"
+              />
+            ) : isUploadingPhoto ? (
+              <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
+            ) : (
+              <Upload className="w-6 h-6 text-slate-400" />
+            )}
+            {isUploadingPhoto && profilePhotoPreview && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <Loader2 className="w-6 h-6 text-white animate-spin" />
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1">
+            <p className="text-sm text-slate-600 mb-3">
+              Upload a professional photo. It will be compressed automatically.
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                disabled={isUploadingPhoto}
+                className="hidden"
+                id="photo-upload-settings"
+              />
+              <label htmlFor="photo-upload-settings">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="cursor-pointer"
+                  disabled={isUploadingPhoto}
+                  asChild
+                >
+                  <span>
+                    {isUploadingPhoto ? "Uploading..." : profilePhotoPreview ? "Change Photo" : "Upload Photo"}
+                  </span>
+                </Button>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Profile Form */}
       <div className="bg-white rounded-xl border border-slate-200 p-6">
         <h2 className="text-lg font-semibold text-slate-900 mb-4">

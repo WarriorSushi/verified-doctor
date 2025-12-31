@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Handshake,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileActions } from "../profile-actions";
@@ -53,12 +54,20 @@ interface ConnectedDoctor {
   profile_photo_url: string | null;
 }
 
+interface InvitedBy {
+  id: string;
+  full_name: string;
+  specialty: string | null;
+  handle: string;
+}
+
 interface ClassicTemplateProps {
   profile: Profile;
   connectedDoctors: ConnectedDoctor[];
+  invitedBy?: InvitedBy | null;
 }
 
-export function ClassicTemplate({ profile, connectedDoctors }: ClassicTemplateProps) {
+export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: ClassicTemplateProps) {
   const [showFullBio, setShowFullBio] = useState(false);
   const recommendationText = formatRecommendationCount(profile.recommendation_count || 0);
   const connectionText = formatConnectionCount(profile.connection_count || 0);
@@ -121,7 +130,7 @@ export function ClassicTemplate({ profile, connectedDoctors }: ClassicTemplatePr
           <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
             {/* Avatar */}
             <div className="flex justify-center sm:justify-start">
-              <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0">
+              <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0">
                 <div className="absolute inset-0 bg-gradient-to-br from-[#0099F7] to-[#0080CC] rounded-full blur-lg opacity-20" />
                 {profile.profile_photo_url ? (
                   <Image
@@ -131,7 +140,7 @@ export function ClassicTemplate({ profile, connectedDoctors }: ClassicTemplatePr
                     className="object-cover rounded-full border-3 border-white shadow-lg relative z-10"
                   />
                 ) : (
-                  <div className="relative z-10 w-full h-full rounded-full bg-gradient-to-br from-[#0099F7] to-[#0080CC] flex items-center justify-center text-white text-2xl sm:text-3xl font-bold border-3 border-white shadow-lg">
+                  <div className="relative z-10 w-full h-full rounded-full bg-gradient-to-br from-[#0099F7] to-[#0080CC] flex items-center justify-center text-white text-3xl sm:text-4xl font-bold border-3 border-white shadow-lg">
                     {profile.full_name
                       .split(" ")
                       .map((n) => n[0])
@@ -151,7 +160,7 @@ export function ClassicTemplate({ profile, connectedDoctors }: ClassicTemplatePr
                   {profile.full_name}
                 </h1>
                 {profile.is_verified && (
-                  <div className="relative w-5 h-5 sm:w-6 sm:h-6" title="Verified Doctor">
+                  <div className="relative w-6 h-6 sm:w-8 sm:h-8" title="Verified Doctor">
                     <Image
                       src="/verified-doctor-logo.svg"
                       alt="Verified"
@@ -211,6 +220,27 @@ export function ClassicTemplate({ profile, connectedDoctors }: ClassicTemplatePr
             </div>
           </div>
         </motion.div>
+
+        {/* Invited By Badge */}
+        {invitedBy && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.08 }}
+            className="flex justify-center sm:justify-start mb-3"
+          >
+            <Link
+              href={`/${invitedBy.handle}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#0099F7]/10 to-[#A4FDFF]/20 border border-[#0099F7]/20 rounded-full text-xs sm:text-sm text-[#0080CC] hover:bg-[#0099F7]/15 transition-colors"
+            >
+              <Handshake className="w-3.5 h-3.5" />
+              <span>
+                Invited by <span className="font-medium">{invitedBy.full_name}</span>
+                {invitedBy.specialty && <span className="text-[#0099F7]/70"> ({invitedBy.specialty})</span>}
+              </span>
+            </Link>
+          </motion.div>
+        )}
 
         {/* Qualifications Badge */}
         {profile.qualifications && (
@@ -342,15 +372,42 @@ export function ClassicTemplate({ profile, connectedDoctors }: ClassicTemplatePr
           </div>
         </motion.div>
 
+        {/* Recommendation Section - Prominent placement */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+          className="bg-gradient-to-br from-[#0099F7]/10 to-[#A4FDFF]/20 rounded-2xl p-5 sm:p-6 text-center border border-[#0099F7]/20 mb-6 relative overflow-hidden"
+        >
+          {/* Animated pulse background */}
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-[#0099F7]/5 via-[#A4FDFF]/10 to-[#0099F7]/5"
+            animate={{
+              x: ["-100%", "100%"],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+          />
+          <div className="relative z-10">
+            <p className="text-slate-700 text-base sm:text-lg font-medium mb-4">
+              Had a great experience with {firstName}?
+            </p>
+            <RecommendButton profileId={profile.id} />
+          </div>
+        </motion.div>
+
         {/* Services - Horizontal scroll on mobile */}
         {services.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-            className="mb-5"
+            transition={{ duration: 0.4, delay: 0.35 }}
+            className="mb-6"
           >
-            <p className="text-[10px] sm:text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">Services</p>
+            <p className="text-[10px] sm:text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Services</p>
             <div className="flex flex-wrap gap-2">
               {services.map((service, i) => (
                 <span
@@ -369,10 +426,10 @@ export function ClassicTemplate({ profile, connectedDoctors }: ClassicTemplatePr
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.35 }}
-            className="mb-5"
+            transition={{ duration: 0.4, delay: 0.4 }}
+            className="mb-6"
           >
-            <p className="text-[10px] sm:text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">
+            <p className="text-[10px] sm:text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">
               Professional Network
             </p>
             <div className="flex -space-x-2">
@@ -405,19 +462,6 @@ export function ClassicTemplate({ profile, connectedDoctors }: ClassicTemplatePr
             </div>
           </motion.div>
         )}
-
-        {/* Recommendation Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.4 }}
-          className="bg-gradient-to-br from-[#0099F7]/5 to-[#A4FDFF]/10 rounded-xl p-4 sm:p-5 text-center border border-[#0099F7]/10"
-        >
-          <p className="text-slate-600 text-sm mb-3">
-            Had a great experience with {firstName}?
-          </p>
-          <RecommendButton profileId={profile.id} />
-        </motion.div>
       </main>
 
       {/* Sticky Action Buttons */}

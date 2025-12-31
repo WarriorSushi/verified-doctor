@@ -6,6 +6,7 @@ export type AnalyticsEventType =
   | "click_book_appointment"
   | "click_send_inquiry"
   | "click_recommend"
+  | "click_share"
   | "inquiry_sent"
   | "recommendation_given";
 

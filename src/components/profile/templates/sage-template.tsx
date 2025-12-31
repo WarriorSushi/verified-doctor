@@ -18,6 +18,7 @@ import {
   Leaf,
   ChevronDown,
   ChevronUp,
+  Handshake,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileActions } from "../profile-actions";
@@ -69,12 +70,20 @@ interface ConnectedDoctor {
   profile_photo_url: string | null;
 }
 
+interface InvitedBy {
+  id: string;
+  full_name: string;
+  specialty: string | null;
+  handle: string;
+}
+
 interface SageTemplateProps {
   profile: Profile;
   connectedDoctors: ConnectedDoctor[];
+  invitedBy?: InvitedBy | null;
 }
 
-export function SageTemplate({ profile, connectedDoctors }: SageTemplateProps) {
+export function SageTemplate({ profile, connectedDoctors, invitedBy }: SageTemplateProps) {
   const [showFullBio, setShowFullBio] = useState(false);
   const recommendationText = formatRecommendationCount(profile.recommendation_count || 0);
   const connectionText = formatConnectionCount(profile.connection_count || 0);
@@ -151,7 +160,7 @@ export function SageTemplate({ profile, connectedDoctors }: SageTemplateProps) {
           <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
             {/* Avatar */}
             <div className="flex justify-center sm:justify-start">
-              <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0">
+              <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0">
                 <div
                   className="absolute inset-0 rounded-full opacity-20"
                   style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})` }}
@@ -166,7 +175,7 @@ export function SageTemplate({ profile, connectedDoctors }: SageTemplateProps) {
                   />
                 ) : (
                   <div
-                    className="relative z-10 w-full h-full rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl font-bold border-3 shadow-lg"
+                    className="relative z-10 w-full h-full rounded-full flex items-center justify-center text-white text-3xl sm:text-4xl font-bold border-3 shadow-lg"
                     style={{
                       background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryLight})`,
                       borderColor: theme.bgCard
@@ -201,7 +210,7 @@ export function SageTemplate({ profile, connectedDoctors }: SageTemplateProps) {
                   {profile.full_name}
                 </h1>
                 {profile.is_verified && (
-                  <div className="relative w-5 h-5 sm:w-6 sm:h-6" title="Verified Doctor">
+                  <div className="relative w-6 h-6 sm:w-8 sm:h-8" title="Verified Doctor">
                     <Image
                       src="/verified-doctor-logo.svg"
                       alt="Verified"
@@ -269,6 +278,32 @@ export function SageTemplate({ profile, connectedDoctors }: SageTemplateProps) {
             </div>
           </div>
         </motion.div>
+
+        {/* Invited By Badge */}
+        {invitedBy && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.08 }}
+            className="flex justify-center sm:justify-start mb-3"
+          >
+            <Link
+              href={`/${invitedBy.handle}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm transition-colors"
+              style={{
+                backgroundColor: `${theme.primary}15`,
+                border: `1px solid ${theme.primary}30`,
+                color: theme.primary
+              }}
+            >
+              <Handshake className="w-3.5 h-3.5" />
+              <span>
+                Invited by <span className="font-medium">{invitedBy.full_name}</span>
+                {invitedBy.specialty && <span style={{ color: `${theme.primary}90` }}> ({invitedBy.specialty})</span>}
+              </span>
+            </Link>
+          </motion.div>
+        )}
 
         {/* Qualifications Badge */}
         {profile.qualifications && (
@@ -429,15 +464,47 @@ export function SageTemplate({ profile, connectedDoctors }: SageTemplateProps) {
           </div>
         </motion.div>
 
+        {/* Recommendation Section - Prominent placement */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+          className="rounded-2xl p-5 sm:p-6 text-center mb-6 relative overflow-hidden"
+          style={{
+            background: `linear-gradient(135deg, ${theme.accentLight}, ${theme.accent}60)`,
+            border: `1px solid ${theme.accent}`
+          }}
+        >
+          {/* Animated pulse background */}
+          <motion.div
+            className="absolute inset-0"
+            style={{ background: `linear-gradient(90deg, transparent, ${theme.accent}40, transparent)` }}
+            animate={{
+              x: ["-100%", "100%"],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+          />
+          <div className="relative z-10">
+            <p className="text-base sm:text-lg font-medium mb-4" style={{ color: theme.text }}>
+              Had a great experience with {firstName}?
+            </p>
+            <RecommendButton profileId={profile.id} />
+          </div>
+        </motion.div>
+
         {/* Services */}
         {services.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-            className="mb-5"
+            transition={{ duration: 0.4, delay: 0.35 }}
+            className="mb-6"
           >
-            <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide mb-2" style={{ color: theme.textLight }}>
+            <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide mb-3" style={{ color: theme.textLight }}>
               Services
             </p>
             <div className="flex flex-wrap gap-2">
@@ -463,10 +530,10 @@ export function SageTemplate({ profile, connectedDoctors }: SageTemplateProps) {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.35 }}
-            className="mb-5"
+            transition={{ duration: 0.4, delay: 0.4 }}
+            className="mb-6"
           >
-            <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide mb-2" style={{ color: theme.textLight }}>
+            <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide mb-3" style={{ color: theme.textLight }}>
               Professional Network
             </p>
             <div className="flex -space-x-2">
@@ -506,23 +573,6 @@ export function SageTemplate({ profile, connectedDoctors }: SageTemplateProps) {
             </div>
           </motion.div>
         )}
-
-        {/* Recommendation Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.4 }}
-          className="rounded-xl p-4 sm:p-5 text-center"
-          style={{
-            background: `linear-gradient(135deg, ${theme.accentLight}50, ${theme.accent}30)`,
-            border: `1px solid ${theme.accent}50`
-          }}
-        >
-          <p className="text-sm mb-3" style={{ color: theme.textMuted }}>
-            Had a great experience with {firstName}?
-          </p>
-          <RecommendButton profileId={profile.id} />
-        </motion.div>
       </main>
 
       {/* Sticky Action Buttons */}

@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { verifyAdminSession } from "@/lib/admin-auth";
 
+// Sanitize search input to prevent SQL injection
+// Escapes special PostgreSQL LIKE/ILIKE characters
+function sanitizeSearchInput(input: string): string {
+  // Remove any characters that could be used for SQL injection
+  // Allow only alphanumeric, spaces, and common name characters
+  return input
+    .replace(/[%_\\'";\-\-]/g, "") // Remove SQL special chars
+    .replace(/[^\w\s.\-@]/g, "") // Allow only word chars, spaces, dots, hyphens, @
+    .trim()
+    .slice(0, 100); // Limit length
+}
+
 export async function GET(request: NextRequest) {
   try {
     const isAdmin = await verifyAdminSession();
@@ -11,9 +23,10 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams;
-    const search = searchParams.get("search") || "";
+    const rawSearch = searchParams.get("search") || "";
+    const search = sanitizeSearchInput(rawSearch);
     const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "20");
+    const limit = Math.min(Math.max(parseInt(searchParams.get("limit") || "20"), 1), 100); // Clamp between 1-100
     const offset = (page - 1) * limit;
 
     const supabase = await createClient();
@@ -23,7 +36,8 @@ export async function GET(request: NextRequest) {
       .from("profiles")
       .select("id, full_name, handle, specialty, profile_photo_url, is_verified, verification_status, recommendation_count, connection_count, created_at", { count: "exact" });
 
-    // Add search filter if provided
+    // Add search filter if provided - use ilike with properly sanitized input
+    // The search is now sanitized above to prevent SQL injection
     if (search) {
       query = query.or(`full_name.ilike.%${search}%,handle.ilike.%${search}%,specialty.ilike.%${search}%`);
     }

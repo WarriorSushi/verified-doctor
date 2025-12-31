@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getAuth } from "@/lib/auth";
+import {
+  getMessageLimiter,
+  getClientIp,
+  checkRateLimit,
+  formatRetryAfter,
+} from "@/lib/rate-limit";
 
 const createMessageSchema = z.object({
   profileId: z.string().uuid("Invalid profile ID"),
@@ -12,6 +18,27 @@ const createMessageSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    // Rate limiting: 5 messages per IP per hour
+    const ip = await getClientIp();
+    const limiter = getMessageLimiter();
+    const rateLimit = await checkRateLimit(limiter, ip);
+
+    if (!rateLimit.success) {
+      const retryAfter = rateLimit.retryAfter || 3600; // Default 1 hour
+      return NextResponse.json(
+        {
+          error: `Too many messages sent. Please try again in ${formatRetryAfter(retryAfter)}.`,
+          code: "RATE_LIMITED",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": retryAfter.toString(),
+          },
+        }
+      );
+    }
+
     const body = await request.json();
     const result = createMessageSchema.safeParse(body);
 
