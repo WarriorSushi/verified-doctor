@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { getAuth } from "@/lib/auth";
 import { isBannedHandle } from "@/lib/banned-handles";
+import { sendWelcomeEmail } from "@/lib/email";
 
 const createProfileSchema = z.object({
   handle: z
@@ -39,9 +40,9 @@ const createProfileSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await getAuth();
+    const { userId, user } = await getAuth();
 
-    if (!userId) {
+    if (!userId || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -224,6 +225,13 @@ export async function POST(request: Request) {
           connectedWith = invite.inviter;
         }
       }
+    }
+
+    // Send welcome email (async, don't block response)
+    if (user.email) {
+      sendWelcomeEmail(user.email, fullName, handle).catch((err) => {
+        console.error("[email] Failed to send welcome email:", err);
+      });
     }
 
     return NextResponse.json({

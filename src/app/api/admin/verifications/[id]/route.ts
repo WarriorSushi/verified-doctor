@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { verifyAdminSession } from "@/lib/admin-auth";
+import { sendVerificationApprovedEmail } from "@/lib/email";
 
 const actionSchema = z.object({
   action: z.enum(["approve", "reject"]),
@@ -33,6 +34,13 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     const { action } = result.data;
 
     if (action === "approve") {
+      // Get profile details for email
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, handle, user_id")
+        .eq("id", id)
+        .single();
+
       // Update profile to verified
       const { error: updateError } = await supabase
         .from("profiles")
@@ -48,6 +56,26 @@ export async function PATCH(request: Request, { params }: RouteParams) {
           { error: "Failed to approve verification" },
           { status: 500 }
         );
+      }
+
+      // Send verification approved email
+      if (profile?.user_id && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        try {
+          const adminClient = createAdminClient();
+          const { data: { user } } = await adminClient.auth.admin.getUserById(profile.user_id);
+
+          if (user?.email) {
+            sendVerificationApprovedEmail(
+              user.email,
+              profile.full_name,
+              profile.handle
+            ).catch((err) => {
+              console.error("[email] Failed to send verification approved email:", err);
+            });
+          }
+        } catch (emailErr) {
+          console.error("[email] Error fetching user email:", emailErr);
+        }
       }
 
       return NextResponse.json({ success: true, status: "approved" });

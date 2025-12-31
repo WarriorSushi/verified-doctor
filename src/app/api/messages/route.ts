@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { getAuth } from "@/lib/auth";
 import {
   getMessageLimiter,
@@ -8,6 +8,7 @@ import {
   checkRateLimit,
   formatRetryAfter,
 } from "@/lib/rate-limit";
+import { sendNewMessageEmail } from "@/lib/email";
 
 const createMessageSchema = z.object({
   profileId: z.string().uuid("Invalid profile ID"),
@@ -56,10 +57,10 @@ export async function POST(request: Request) {
 
     const supabase = await createClient();
 
-    // Check if profile exists
+    // Check if profile exists and get user_id for email notification
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("id, full_name")
+      .select("id, full_name, user_id")
       .eq("id", profileId)
       .single();
 
@@ -89,6 +90,32 @@ export async function POST(request: Request) {
         { error: "Failed to send message" },
         { status: 500 }
       );
+    }
+
+    // Send email notification to doctor (async, don't block response)
+    if (profile.user_id && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      // Use admin client to get user email (requires service role key)
+      try {
+        const adminClient = createAdminClient();
+        const { data: { user: doctorUser } } = await adminClient.auth.admin.getUserById(profile.user_id);
+
+        if (doctorUser?.email) {
+          const messagePreview = messageContent.length > 100
+            ? messageContent.substring(0, 100)
+            : messageContent;
+
+          sendNewMessageEmail(
+            doctorUser.email,
+            profile.full_name,
+            senderName,
+            messagePreview
+          ).catch((err) => {
+            console.error("[email] Failed to send new message notification:", err);
+          });
+        }
+      } catch (emailErr) {
+        console.error("[email] Error fetching doctor email:", emailErr);
+      }
     }
 
     return NextResponse.json({
