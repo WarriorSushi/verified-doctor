@@ -2,8 +2,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
-import { getAuth } from "@/lib/auth/test-auth";
+import { getAuth } from "@/lib/auth";
 import { DashboardNav } from "@/components/dashboard/dashboard-nav";
+import { UserMenu } from "@/components/dashboard/user-menu";
 
 export default async function DashboardLayout({
   children,
@@ -45,9 +46,9 @@ export default async function DashboardLayout({
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="relative w-8 h-8">
+            <div className="relative w-7 h-7 sm:w-8 sm:h-8">
               <Image
                 src="/verified-doctor-logo.svg"
                 alt="Verified.Doctor"
@@ -55,32 +56,23 @@ export default async function DashboardLayout({
                 className="object-contain"
               />
             </div>
-            <span className="text-lg font-semibold text-slate-800 tracking-tight">
+            <span className="text-base sm:text-lg font-semibold text-slate-800 tracking-tight">
               verified<span className="text-[#0099F7]">.doctor</span>
             </span>
           </Link>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link
               href={`/${profile.handle}`}
               target="_blank"
-              className="text-sm text-[#0099F7] hover:text-[#0080CC]"
+              className="text-xs sm:text-sm text-[#0099F7] hover:text-[#0080CC]"
             >
               View Profile →
             </Link>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0099F7] to-[#0080CC] flex items-center justify-center text-white text-sm font-bold">
-                {profile.full_name
-                  .split(" ")
-                  .map((n: string) => n[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase()}
-              </div>
-              <span className="text-sm font-medium text-slate-700 hidden sm:block">
-                {profile.full_name}
-              </span>
-            </div>
+            <UserMenu
+              fullName={profile.full_name}
+              handle={profile.handle}
+            />
           </div>
         </div>
 
@@ -92,7 +84,7 @@ export default async function DashboardLayout({
       </header>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-6 py-8">{children}</main>
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-8">{children}</main>
     </div>
   );
 }

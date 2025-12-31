@@ -1,0 +1,87 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { createClient } from "@/lib/supabase/server";
+import { verifyAdminSession } from "@/lib/admin-auth";
+
+const actionSchema = z.object({
+  action: z.enum(["approve", "reject"]),
+});
+
+interface RouteParams {
+  params: Promise<{ id: string }>;
+}
+
+export async function PATCH(request: Request, { params }: RouteParams) {
+  try {
+    const isAdmin = await verifyAdminSession();
+    if (!isAdmin) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const body = await request.json();
+    const result = actionSchema.safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: "Invalid action" },
+        { status: 400 }
+      );
+    }
+
+    const supabase = await createClient();
+    const { action } = result.data;
+
+    if (action === "approve") {
+      // Update profile to verified
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({
+          is_verified: true,
+          verification_status: "approved",
+        })
+        .eq("id", id);
+
+      if (updateError) {
+        console.error("Error approving verification:", updateError);
+        return NextResponse.json(
+          { error: "Failed to approve verification" },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({ success: true, status: "approved" });
+    } else {
+      // Reject - update status but don't verify
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({
+          is_verified: false,
+          verification_status: "rejected",
+        })
+        .eq("id", id);
+
+      if (updateError) {
+        console.error("Error rejecting verification:", updateError);
+        return NextResponse.json(
+          { error: "Failed to reject verification" },
+          { status: 500 }
+        );
+      }
+
+      // Optionally delete the verification documents
+      await supabase
+        .from("verification_documents")
+        .delete()
+        .eq("profile_id", id);
+
+      return NextResponse.json({ success: true, status: "rejected" });
+    }
+  } catch (error) {
+    console.error("Admin verification action error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

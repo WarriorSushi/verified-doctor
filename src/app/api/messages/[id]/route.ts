@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getAuth } from "@/lib/auth/test-auth";
+import { getAuth } from "@/lib/auth";
 
 const updateSchema = z.object({
   isRead: z.boolean().optional(),
@@ -104,6 +104,53 @@ export async function GET(request: Request, { params }: RouteParams) {
     return NextResponse.json({ message });
   } catch (error) {
     console.error("Get message error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request, { params }: RouteParams) {
+  try {
+    const { userId } = await getAuth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = await createClient() as any;
+
+    // Verify ownership
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("user_id", userId)
+      .single();
+
+    if (!profile) {
+      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+    }
+
+    // Soft delete message by setting deleted_at
+    const { error } = await supabase
+      .from("messages")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id)
+      .eq("profile_id", profile.id);
+
+    if (error) {
+      console.error("Delete error:", error);
+      return NextResponse.json(
+        { error: "Failed to delete message" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Message delete error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

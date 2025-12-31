@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Save, Check, Palette } from "lucide-react";
+import { Loader2, Save, Check, Palette, Power, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { VerificationUpload } from "./verification-upload";
 import { cn } from "@/lib/utils";
 
@@ -78,6 +79,48 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
     profile.profile_template || "classic"
   );
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+  const [isFrozen, setIsFrozen] = useState(false);
+  const [isTogglingFreeze, setIsTogglingFreeze] = useState(false);
+
+  // Fetch freeze status on mount
+  useEffect(() => {
+    const fetchFreezeStatus = async () => {
+      try {
+        const response = await fetch("/api/profile/freeze");
+        if (response.ok) {
+          const data = await response.json();
+          setIsFrozen(data.isFrozen);
+        }
+      } catch {
+        // Ignore errors, default to false
+      }
+    };
+    fetchFreezeStatus();
+  }, []);
+
+  const handleFreezeToggle = async (checked: boolean) => {
+    setIsTogglingFreeze(true);
+    try {
+      const response = await fetch("/api/profile/freeze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isFrozen: checked }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsFrozen(data.isFrozen);
+        toast.success(data.message);
+        router.refresh();
+      } else {
+        toast.error("Failed to update profile status");
+      }
+    } catch {
+      toast.error("Failed to update profile status");
+    } finally {
+      setIsTogglingFreeze(false);
+    }
+  };
 
   const handleTemplateChange = async (templateId: string) => {
     setSelectedTemplate(templateId);
@@ -326,14 +369,72 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
         />
       </div>
 
-      {/* Logout */}
+      {/* Profile Visibility (Freeze) */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Power className="w-5 h-5 text-slate-500" />
+          <h2 className="text-lg font-semibold text-slate-900">
+            Profile Visibility
+          </h2>
+        </div>
+
+        <div className="flex items-center justify-between p-4 rounded-lg border border-slate-200 bg-slate-50">
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <p className="font-medium text-slate-900">
+                {isFrozen ? "Profile is Offline" : "Profile is Live"}
+              </p>
+              {isFrozen && (
+                <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
+                  Frozen
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-slate-500 mt-1">
+              {isFrozen
+                ? "Your profile is hidden from patients. Turn this off to go live again."
+                : "Your profile is visible to patients at verified.doctor/" + profile.handle}
+            </p>
+          </div>
+          <Switch
+            checked={isFrozen}
+            onCheckedChange={handleFreezeToggle}
+            disabled={isTogglingFreeze}
+            className={cn(
+              isFrozen && "data-[state=checked]:bg-amber-500"
+            )}
+          />
+        </div>
+
+        {isFrozen && (
+          <div className="mt-4 p-4 rounded-lg bg-amber-50 border border-amber-200">
+            <div className="flex gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-amber-800">
+                  Your profile is currently frozen
+                </p>
+                <p className="text-sm text-amber-700 mt-1">
+                  While frozen, patients cannot find you, send inquiries, or leave recommendations.
+                  You will receive a reminder email to unfreeze your profile.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Account */}
       <div className="bg-white rounded-xl border border-slate-200 p-6">
         <h2 className="text-lg font-semibold text-slate-900 mb-4">Account</h2>
+        <p className="text-sm text-slate-500 mb-4">
+          Sign out of your account on this device.
+        </p>
         <Button
           variant="outline"
           className="text-red-600 hover:text-red-700 hover:bg-red-50"
           onClick={async () => {
-            await fetch("/api/test-auth/logout", { method: "POST" });
+            await fetch("/api/auth/logout", { method: "POST" });
             window.location.href = "/";
           }}
         >

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getAuth } from "@/lib/auth/test-auth";
+import { getAuth } from "@/lib/auth";
 import { MessageList } from "@/components/dashboard/message-list";
 
 export default async function MessagesPage() {

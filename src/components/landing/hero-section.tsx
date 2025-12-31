@@ -77,7 +77,7 @@ export function HeroSection() {
       <div className="absolute top-1/4 -left-32 w-96 h-96 bg-[#0099F7]/10 rounded-full blur-3xl" />
       <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-[#A4FDFF]/20 rounded-full blur-3xl" />
 
-      <div className="relative z-10 w-full max-w-3xl mx-auto px-6 pt-24 pb-16">
+      <div className="relative z-10 w-full max-w-3xl mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-12 sm:pb-16">
         {/* Main Content */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -90,11 +90,11 @@ export function HeroSection() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-[#0099F7]/10 to-[#A4FDFF]/10 border border-[#0099F7]/20 mb-8"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-[#0099F7]/10 to-[#A4FDFF]/10 border border-[#0099F7]/20 mb-6 sm:mb-8"
           >
-            <span className="w-2 h-2 rounded-full bg-[#0099F7] animate-pulse" />
-            <span className="text-sm font-medium text-[#0080CC]">
-              The Blue Checkmark for Medical Professionals
+            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#0099F7] animate-pulse" />
+            <span className="text-xs sm:text-sm font-medium text-[#0080CC]">
+              The Blue Checkmark for Doctors
             </span>
           </motion.div>
 
@@ -103,7 +103,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
-            className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-slate-900 mb-6"
+            className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-slate-900 mb-4 sm:mb-6"
           >
             Your Digital Identity.
             <br />
@@ -117,10 +117,10 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
-            className="text-lg md:text-xl text-slate-600 mb-12 max-w-xl mx-auto"
+            className="text-base sm:text-lg md:text-xl text-slate-600 mb-8 sm:mb-12 max-w-xl mx-auto"
           >
             Claim your unique URL before another doctor does.
-            <br className="hidden md:block" />
+            <br className="hidden sm:block" />
             Stand out with a verified professional presence.
           </motion.p>
 
@@ -133,80 +133,84 @@ export function HeroSection() {
           >
             <div
               className={`
-                relative flex items-center rounded-2xl bg-white border-2 transition-all duration-300 shadow-lg shadow-slate-200/50
+                relative flex flex-col sm:flex-row items-stretch sm:items-center rounded-xl sm:rounded-2xl bg-white border-2 transition-all duration-300 shadow-lg shadow-slate-200/50
                 ${isInputFocused ? "border-[#0099F7] shadow-[#0099F7]/10" : "border-slate-200"}
                 ${status === "available" ? "border-emerald-500 shadow-emerald-500/10" : ""}
                 ${status === "taken" ? "border-red-400 shadow-red-400/10" : ""}
               `}
             >
-              {/* URL Prefix */}
-              <div className="flex-shrink-0 pl-5 pr-2 py-4 flex items-center">
-                <span className="text-slate-500 font-medium text-lg">
+              {/* URL Prefix - shown above input on mobile */}
+              <div className="flex-shrink-0 px-4 sm:pl-5 sm:pr-2 py-2 sm:py-4 flex items-center border-b sm:border-b-0 border-slate-100">
+                <span className="text-slate-500 font-medium text-sm sm:text-lg">
                   verified.doctor/
                 </span>
               </div>
 
-              {/* Input */}
-              <div className="flex-1 relative">
-                <Input
-                  type="text"
-                  value={handle}
-                  onChange={(e) => {
-                    setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""));
-                    setStatus("idle");
-                  }}
-                  onFocus={() => setIsInputFocused(true)}
-                  onBlur={() => setIsInputFocused(false)}
-                  onKeyDown={handleKeyDown}
-                  placeholder=""
-                  className="border-0 bg-transparent text-lg font-medium text-slate-900 placeholder:text-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0 h-auto py-4 px-0"
-                />
-                {/* Typewriter placeholder */}
-                {!handle && !isInputFocused && (
-                  <div className="absolute inset-0 flex items-center pointer-events-none">
-                    <Typewriter isActive={!isInputFocused && !handle} />
-                  </div>
-                )}
-              </div>
+              {/* Input + Button Row */}
+              <div className="flex items-center flex-1">
+                {/* Input */}
+                <div className="flex-1 relative">
+                  <Input
+                    type="text"
+                    value={handle}
+                    onChange={(e) => {
+                      setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""));
+                      setStatus("idle");
+                    }}
+                    onFocus={() => setIsInputFocused(true)}
+                    onBlur={() => setIsInputFocused(false)}
+                    onKeyDown={handleKeyDown}
+                    placeholder=""
+                    className="border-0 bg-transparent text-base sm:text-lg font-medium text-slate-900 placeholder:text-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0 h-auto py-3 sm:py-4 px-4 sm:px-0"
+                  />
+                  {/* Typewriter placeholder */}
+                  {!handle && !isInputFocused && (
+                    <div className="absolute inset-0 flex items-center pl-4 sm:pl-0 pointer-events-none">
+                      <Typewriter isActive={!isInputFocused && !handle} />
+                    </div>
+                  )}
+                </div>
 
-              {/* Action Button */}
-              <div className="flex-shrink-0 pr-2">
-                {status === "available" ? (
-                  <Button
-                    onClick={handleClaim}
-                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-6 rounded-xl font-semibold transition-all duration-200"
-                  >
-                    <Check className="w-5 h-5 mr-2" />
-                    Claim This Name
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={checkAvailability}
-                    disabled={!handle.trim() || status === "checking"}
-                    className="bg-gradient-to-r from-[#0099F7] to-[#0080CC] hover:from-[#0088E0] hover:to-[#0070B8] text-white px-6 py-6 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {status === "checking" ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <>
-                        Check
-                        <ArrowRight className="w-5 h-5 ml-2" />
-                      </>
-                    )}
-                  </Button>
-                )}
+                {/* Action Button */}
+                <div className="flex-shrink-0 pr-2">
+                  {status === "available" ? (
+                    <Button
+                      onClick={handleClaim}
+                      className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-4 sm:px-6 py-5 sm:py-6 rounded-lg sm:rounded-xl font-semibold transition-all duration-200 text-sm sm:text-base"
+                    >
+                      <Check className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" />
+                      <span className="hidden sm:inline">Claim This Name</span>
+                      <span className="sm:hidden">Claim</span>
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={checkAvailability}
+                      disabled={!handle.trim() || status === "checking"}
+                      className="bg-gradient-to-r from-[#0099F7] to-[#0080CC] hover:from-[#0088E0] hover:to-[#0070B8] text-white px-4 sm:px-6 py-5 sm:py-6 rounded-lg sm:rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                    >
+                      {status === "checking" ? (
+                        <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                      ) : (
+                        <>
+                          Check
+                          <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1 sm:ml-2" />
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Status Messages */}
-            <div className="h-8 mt-4">
+            <div className="h-6 sm:h-8 mt-3 sm:mt-4">
               {status === "available" && (
                 <motion.p
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-emerald-600 font-medium flex items-center justify-center gap-2"
+                  className="text-emerald-600 font-medium flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
                 >
-                  <Check className="w-4 h-4" />
+                  <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   This name is available! Claim it now.
                 </motion.p>
               )}
@@ -214,7 +218,7 @@ export function HeroSection() {
                 <motion.p
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-red-500 font-medium"
+                  className="text-red-500 font-medium text-xs sm:text-sm"
                 >
                   This name is taken. Try another one.
                 </motion.p>
@@ -227,25 +231,25 @@ export function HeroSection() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7, duration: 0.6 }}
-            className="mt-8 flex items-center justify-center gap-6 text-sm text-slate-500"
+            className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm text-slate-500"
           >
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-orange-100 text-orange-600">
+              <span className="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-orange-100 text-orange-600 text-xs sm:text-sm">
                 🔥
               </span>
               <span>
                 <strong className="text-slate-700">{joinedCount}</strong> doctors joined today
               </span>
             </div>
-            <div className="w-px h-4 bg-slate-200" />
+            <div className="hidden sm:block w-px h-4 bg-slate-200" />
             <div className="flex -space-x-2">
               {[1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
-                  className="w-7 h-7 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 border-2 border-white"
+                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 border-2 border-white"
                 />
               ))}
-              <div className="w-7 h-7 rounded-full bg-[#0099F7] border-2 border-white flex items-center justify-center text-white text-xs font-bold">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#0099F7] border-2 border-white flex items-center justify-center text-white text-[10px] sm:text-xs font-bold">
                 +
               </div>
             </div>

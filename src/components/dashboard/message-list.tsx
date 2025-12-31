@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { MessageSquare, Phone, Clock, Check, Send, Loader2 } from "lucide-react";
+import { MessageSquare, Phone, Clock, Check, Send, Loader2, Trash2, Pin, Shield } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -11,6 +13,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Message {
   id: string;
@@ -21,6 +34,9 @@ interface Message {
   reply_content: string | null;
   reply_sent_at: string | null;
   created_at: string | null;
+  is_admin_message?: boolean | null;
+  is_pinned?: boolean | null;
+  admin_sender_name?: string | null;
 }
 
 interface MessageListProps {
@@ -28,10 +44,13 @@ interface MessageListProps {
   profileId: string;
 }
 
-export function MessageList({ messages, profileId }: MessageListProps) {
+export function MessageList({ messages: initialMessages, profileId }: MessageListProps) {
+  const router = useRouter();
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [replyContent, setReplyContent] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleOpenMessage = async (message: Message) => {
     setSelectedMessage(message);
@@ -72,13 +91,39 @@ export function MessageList({ messages, profileId }: MessageListProps) {
     }
   };
 
+  const handleDeleteMessage = async (messageId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/messages/${messageId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        // Remove from local state
+        setMessages(messages.filter((m) => m.id !== messageId));
+        if (selectedMessage?.id === messageId) {
+          setSelectedMessage(null);
+        }
+        toast.success("Message deleted");
+      } else {
+        toast.error("Failed to delete message");
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Failed to delete message");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (messages.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
         <MessageSquare className="w-12 h-12 text-slate-300 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-slate-900">No messages yet</h3>
         <p className="text-slate-500 mt-1">
-          When patients send inquiries through your profile, they'll appear here.
+          When patients send inquiries through your profile, they&apos;ll appear here.
         </p>
       </div>
     );
@@ -87,59 +132,115 @@ export function MessageList({ messages, profileId }: MessageListProps) {
   return (
     <>
       <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100">
-        {messages.map((message) => (
-          <button
-            key={message.id}
-            onClick={() => handleOpenMessage(message)}
-            className="w-full p-4 text-left hover:bg-slate-50 transition-colors flex items-start gap-4"
-          >
+        {messages.map((message) => {
+          const isAdminMessage = message.is_admin_message;
+
+          return (
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                message.is_read
-                  ? "bg-slate-100 text-slate-600"
-                  : "bg-[#0099F7] text-white"
-              }`}
+              key={message.id}
+              className={`relative group ${isAdminMessage ? "bg-gradient-to-r from-rose-50 to-pink-50" : ""}`}
             >
-              {message.sender_name
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
-                .slice(0, 2)
-                .toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-semibold text-slate-900">
-                  {message.sender_name}
-                </span>
-                {!message.is_read && (
-                  <span className="px-1.5 py-0.5 text-xs font-medium bg-[#0099F7] text-white rounded">
-                    New
-                  </span>
-                )}
-                {message.reply_sent_at && (
-                  <span className="px-1.5 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 rounded flex items-center gap-1">
-                    <Check className="w-3 h-3" />
-                    Replied
-                  </span>
-                )}
-              </div>
-              <p className="text-slate-600 text-sm line-clamp-2">
-                {message.message_content}
-              </p>
-              {message.created_at && (
-                <div className="flex items-center gap-4 mt-2 text-xs text-slate-400">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {formatDistanceToNow(new Date(message.created_at), {
-                      addSuffix: true,
-                    })}
-                  </span>
+              <button
+                onClick={() => handleOpenMessage(message)}
+                className="w-full p-4 text-left hover:bg-slate-50/50 transition-colors flex items-start gap-4"
+              >
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    isAdminMessage
+                      ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white"
+                      : message.is_read
+                      ? "bg-slate-100 text-slate-600"
+                      : "bg-[#0099F7] text-white"
+                  }`}
+                >
+                  {isAdminMessage ? (
+                    <Shield className="w-5 h-5" />
+                  ) : (
+                    message.sender_name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase()
+                  )}
                 </div>
-              )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className={`font-semibold ${isAdminMessage ? "text-rose-700" : "text-slate-900"}`}>
+                      {message.sender_name}
+                    </span>
+                    {message.is_pinned && (
+                      <span className="px-1.5 py-0.5 text-xs font-medium bg-rose-100 text-rose-700 rounded flex items-center gap-1">
+                        <Pin className="w-3 h-3" />
+                        Pinned
+                      </span>
+                    )}
+                    {isAdminMessage && (
+                      <span className="px-1.5 py-0.5 text-xs font-medium bg-rose-500 text-white rounded">
+                        Admin
+                      </span>
+                    )}
+                    {!message.is_read && !isAdminMessage && (
+                      <span className="px-1.5 py-0.5 text-xs font-medium bg-[#0099F7] text-white rounded">
+                        New
+                      </span>
+                    )}
+                    {message.reply_sent_at && (
+                      <span className="px-1.5 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 rounded flex items-center gap-1">
+                        <Check className="w-3 h-3" />
+                        Replied
+                      </span>
+                    )}
+                  </div>
+                  <p className={`text-sm line-clamp-2 ${isAdminMessage ? "text-rose-600" : "text-slate-600"}`}>
+                    {message.message_content}
+                  </p>
+                  {message.created_at && (
+                    <div className="flex items-center gap-4 mt-2 text-xs text-slate-400">
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {formatDistanceToNow(new Date(message.created_at), {
+                          addSuffix: true,
+                        })}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </button>
+
+              {/* Delete button */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-red-500 hover:bg-red-50"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete message?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will remove the message from your inbox. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={(e: React.MouseEvent) => handleDeleteMessage(message.id, e)}
+                      className="bg-red-500 hover:bg-red-600"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
-          </button>
-        ))}
+          );
+        })}
       </div>
 
       {/* Message Detail Dialog */}

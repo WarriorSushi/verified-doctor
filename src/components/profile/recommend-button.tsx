@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ThumbsUp, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { trackEvent } from "@/lib/analytics";
 
 interface RecommendButtonProps {
   profileId: string;
@@ -13,6 +14,8 @@ export function RecommendButton({ profileId }: RecommendButtonProps) {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "already">("idle");
 
   const handleRecommend = async () => {
+    // Track click event
+    trackEvent({ profileId, eventType: "click_recommend" });
     setStatus("loading");
 
     try {
@@ -26,8 +29,10 @@ export function RecommendButton({ profileId }: RecommendButtonProps) {
 
       if (data.alreadyRecommended) {
         setStatus("already");
-        toast.info("You've already recommended this doctor");
+        toast.info("You&apos;ve already recommended this doctor");
       } else {
+        // Track successful recommendation
+        trackEvent({ profileId, eventType: "recommendation_given" });
         setStatus("success");
         toast.success("Thank you for your recommendation!");
       }
@@ -53,7 +58,7 @@ export function RecommendButton({ profileId }: RecommendButtonProps) {
     return (
       <Button disabled variant="outline">
         <Check className="w-5 h-5 mr-2" />
-        You've already recommended
+        You&apos;ve already recommended
       </Button>
     );
   }

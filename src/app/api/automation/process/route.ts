@@ -1,0 +1,148 @@
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+
+// This endpoint would be called by a cron job or external service
+// to process the email queue and send pending emails
+// For now, it just returns the emails that should be sent
+
+// NOTE: This is the infrastructure stub. The actual email sending
+// logic should be implemented when integrating with Resend or similar.
+// See docs/pending-automation.md for implementation details.
+
+// POST - Process and send pending emails (called by cron/automation engine)
+export async function POST(request: Request) {
+  try {
+    // Verify this is an authorized call (could use a secret key)
+    const authHeader = request.headers.get("authorization");
+    const expectedKey = process.env.AUTOMATION_SECRET_KEY;
+
+    // If secret key is configured, verify it
+    if (expectedKey && authHeader !== `Bearer ${expectedKey}`) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const supabase = await createClient();
+    const now = new Date().toISOString();
+
+    // Get pending emails that are due
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: pendingEmails, error: fetchError } = await (supabase as any)
+      .from("automation_email_queue")
+      .select(`
+        *,
+        profile:profiles(id, full_name, handle, user_id),
+        template:automation_email_templates(*)
+      `)
+      .eq("status", "pending")
+      .lte("scheduled_for", now)
+      .order("scheduled_for", { ascending: true })
+      .limit(50); // Process in batches
+
+    if (fetchError) {
+      console.error("Error fetching pending emails:", fetchError);
+      return NextResponse.json(
+        { error: "Failed to fetch pending emails" },
+        { status: 500 }
+      );
+    }
+
+    if (!pendingEmails || pendingEmails.length === 0) {
+      return NextResponse.json({
+        success: true,
+        processed: 0,
+        message: "No pending emails to process",
+      });
+    }
+
+    // Get user emails for the profiles
+    const userIds = pendingEmails
+      .map((e: { profile?: { user_id?: string } }) => e.profile?.user_id)
+      .filter(Boolean);
+
+    // In a real implementation, you would:
+    // 1. Fetch user emails from your auth system (Clerk/Supabase Auth)
+    // 2. Process template variables (replace {{name}}, {{handle}}, etc.)
+    // 3. Send emails via Resend
+    // 4. Update queue status to 'sent' or 'failed'
+    // 5. Log to automation_email_log
+
+    // For now, return what would be processed
+    const emailsToSend = pendingEmails.map((email: {
+      id: string;
+      profile?: { full_name?: string; handle?: string };
+      template?: { slug?: string; subject?: string };
+      scheduled_for: string;
+    }) => ({
+      id: email.id,
+      recipientName: email.profile?.full_name,
+      recipientHandle: email.profile?.handle,
+      templateSlug: email.template?.slug,
+      subject: email.template?.subject,
+      scheduledFor: email.scheduled_for,
+    }));
+
+    return NextResponse.json({
+      success: true,
+      processed: emailsToSend.length,
+      pendingEmails: emailsToSend,
+      message: `Found ${emailsToSend.length} emails ready to send. Actual sending not implemented yet - see docs/pending-automation.md`,
+      userIds, // For debugging - would be used to fetch emails
+    });
+  } catch (error) {
+    console.error("Process queue error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// GET - Check queue status (useful for monitoring)
+export async function GET() {
+  try {
+    const supabase = await createClient();
+
+    // Get queue statistics
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: stats, error } = await (supabase as any)
+      .from("automation_email_queue")
+      .select("status");
+
+    if (error) {
+      console.error("Error fetching queue stats:", error);
+      return NextResponse.json(
+        { error: "Failed to fetch stats" },
+        { status: 500 }
+      );
+    }
+
+    const statusCounts = (stats || []).reduce(
+      (acc: Record<string, number>, item: { status: string }) => {
+        acc[item.status] = (acc[item.status] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    // Get count of emails due now
+    const now = new Date().toISOString();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { count: dueNow } = await (supabase as any)
+      .from("automation_email_queue")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "pending")
+      .lte("scheduled_for", now);
+
+    return NextResponse.json({
+      queueStats: statusCounts,
+      emailsDueNow: dueNow || 0,
+      timestamp: now,
+    });
+  } catch (error) {
+    console.error("Queue status error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

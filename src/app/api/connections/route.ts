@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getAuth } from "@/lib/auth/test-auth";
+import { getAuth } from "@/lib/auth";
 
 const createConnectionSchema = z.object({
   receiverId: z.string().uuid(),

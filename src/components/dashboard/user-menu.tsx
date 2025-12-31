@@ -1,0 +1,92 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { LogOut, User, Settings, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+
+interface UserMenuProps {
+  fullName: string;
+  handle: string;
+}
+
+export function UserMenu({ fullName, handle }: UserMenuProps) {
+  const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const initials = fullName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      const response = await fetch("/api/test-auth/logout", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        toast.success("Logged out successfully");
+        router.push("/");
+        router.refresh();
+      } else {
+        toast.error("Failed to logout");
+      }
+    } catch {
+      toast.error("Failed to logout");
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="flex items-center gap-1.5 focus:outline-none group">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0099F7] to-[#0080CC] flex items-center justify-center text-white text-xs sm:text-sm font-bold">
+          {initials}
+        </div>
+        <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <div className="px-2 py-1.5">
+          <p className="text-sm font-medium text-slate-900">{fullName}</p>
+          <p className="text-xs text-slate-500">verified.doctor/{handle}</p>
+        </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => router.push(`/${handle}`)}
+          className="cursor-pointer"
+        >
+          <User className="w-4 h-4 mr-2" />
+          View Public Profile
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => router.push("/dashboard/settings")}
+          className="cursor-pointer"
+        >
+          <Settings className="w-4 h-4 mr-2" />
+          Settings
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+          className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          {isLoggingOut ? "Logging out..." : "Logout"}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

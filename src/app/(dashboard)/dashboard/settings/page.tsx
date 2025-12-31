@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getAuth } from "@/lib/auth/test-auth";
+import { getAuth } from "@/lib/auth";
 import { ProfileSettings } from "@/components/dashboard/profile-settings";
 
 export default async function SettingsPage() {
@@ -21,6 +21,13 @@ export default async function SettingsPage() {
     redirect("/onboarding");
   }
 
+  // Ensure profile_template has a default value (cast needed until DB types are regenerated)
+  const profileData = profile as typeof profile & { profile_template?: string | null };
+  const profileWithTemplate = {
+    ...profile,
+    profile_template: profileData.profile_template ?? "classic",
+  };
+
   return (
     <div>
       <div className="mb-6">
@@ -30,7 +37,7 @@ export default async function SettingsPage() {
         </p>
       </div>
 
-      <ProfileSettings profile={profile} />
+      <ProfileSettings profile={profileWithTemplate} />
     </div>
   );
 }

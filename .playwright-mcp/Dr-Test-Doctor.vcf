@@ -1,0 +1,8 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Dr. Test Doctor
+TITLE:Cardiologist
+ORG:Test Medical Center
+ADR:;;Mumbai, India;;;
+URL:https://verified.doctor/testdoctor
+END:VCARD

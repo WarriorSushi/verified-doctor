@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, MessageSquare, Users, Settings } from "lucide-react";
+import { LayoutDashboard, MessageSquare, Users, Settings, BarChart3 } from "lucide-react";
 
 interface DashboardNavProps {
   unreadCount: number;
@@ -14,6 +14,7 @@ const navItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/messages", label: "Messages", icon: MessageSquare, badgeKey: "messages" },
   { href: "/dashboard/connections", label: "Connections", icon: Users, badgeKey: "connections" },
+  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
@@ -27,9 +28,9 @@ export function DashboardNav({ unreadCount, pendingConnectionsCount = 0 }: Dashb
   };
 
   return (
-    <nav className="border-t border-slate-100 bg-white">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="flex gap-1">
+    <nav className="border-t border-slate-100 bg-white overflow-x-auto">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="flex gap-0.5 sm:gap-1 min-w-max">
           {navItems.map((item) => {
             const isActive =
               item.href === "/dashboard"
@@ -43,16 +44,16 @@ export function DashboardNav({ unreadCount, pendingConnectionsCount = 0 }: Dashb
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors",
+                  "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap",
                   isActive
                     ? "border-[#0099F7] text-[#0099F7]"
                     : "border-transparent text-slate-600 hover:text-slate-900"
                 )}
               >
                 <Icon className="w-4 h-4" />
-                {item.label}
+                <span className="hidden xs:inline sm:inline">{item.label}</span>
                 {badgeCount > 0 && (
-                  <span className="ml-1 px-1.5 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full">
+                  <span className="ml-0.5 sm:ml-1 px-1.5 py-0.5 text-[10px] sm:text-xs font-bold bg-red-500 text-white rounded-full min-w-[18px] text-center">
                     {badgeCount}
                   </span>
                 )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -20,13 +20,29 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 const TEMPLATES = [
-  { id: "classic", name: "Classic", description: "Clean and professional" },
-  { id: "modern", name: "Modern", description: "Bold with gradients" },
-  { id: "minimal", name: "Minimal", description: "Simple and elegant" },
-  { id: "professional", name: "Professional", description: "Corporate style" },
+  {
+    id: "classic",
+    name: "Classic",
+    description: "Clean white with brand blue accents",
+  },
+  {
+    id: "ocean",
+    name: "Ocean",
+    description: "Soft blue professional theme",
+  },
+  {
+    id: "sage",
+    name: "Sage",
+    description: "Calming green medical aesthetic",
+  },
+  {
+    id: "warm",
+    name: "Warm",
+    description: "Soft cream with terracotta accents",
+  },
 ];
 
-export default function OnboardingPage() {
+function OnboardingForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const prefilledHandle = searchParams.get("handle");
@@ -159,10 +175,10 @@ export default function OnboardingPage() {
       <div className="absolute top-1/4 -left-32 w-96 h-96 bg-[#0099F7]/10 rounded-full blur-3xl" />
       <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-[#A4FDFF]/20 rounded-full blur-3xl" />
 
-      <div className="relative z-10 max-w-2xl mx-auto px-6 py-12">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Logo */}
-        <Link href="/" className="flex items-center justify-center gap-2 mb-8">
-          <div className="relative w-10 h-10">
+        <Link href="/" className="flex items-center justify-center gap-1.5 sm:gap-2 mb-6 sm:mb-8">
+          <div className="relative w-8 h-8 sm:w-10 sm:h-10">
             <Image
               src="/verified-doctor-logo.svg"
               alt="Verified.Doctor"
@@ -170,17 +186,17 @@ export default function OnboardingPage() {
               className="object-contain"
             />
           </div>
-          <span className="text-xl font-semibold text-slate-800 tracking-tight">
+          <span className="text-lg sm:text-xl font-semibold text-slate-800 tracking-tight">
             verified<span className="text-[#0099F7]">.doctor</span>
           </span>
         </Link>
 
         {/* Progress */}
-        <div className="flex items-center justify-center gap-2 mb-8">
+        <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-6 sm:mb-8">
           {[1, 2, 3, 4].map((s) => (
             <div
               key={s}
-              className={`w-3 h-3 rounded-full transition-colors ${
+              className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full transition-colors ${
                 s <= step ? "bg-[#0099F7]" : "bg-slate-200"
               }`}
             />
@@ -193,28 +209,28 @@ export default function OnboardingPage() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3 }}
-          className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8"
+          className="bg-white rounded-xl sm:rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 p-5 sm:p-8"
         >
           <form onSubmit={handleSubmit}>
             {/* Step 1: Basic Info */}
             {step === 1 && (
               <>
-                <div className="text-center mb-8">
-                  <h1 className="text-2xl font-bold text-slate-900 mb-2">
+                <div className="text-center mb-6 sm:mb-8">
+                  <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">
                     Let&apos;s set up your profile
                   </h1>
-                  <p className="text-slate-600">
+                  <p className="text-sm sm:text-base text-slate-600">
                     This takes less than 3 minutes
                   </p>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-5 sm:space-y-6">
                   {/* Handle */}
                   <div className="space-y-2">
-                    <Label htmlFor="handle">Your URL</Label>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center h-12 px-4 bg-slate-50 border border-slate-200 rounded-lg">
-                        <span className="text-slate-500 font-medium">
+                    <Label htmlFor="handle" className="text-sm sm:text-base">Your URL</Label>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <div className="flex items-center h-10 sm:h-12 px-3 sm:px-4 bg-slate-50 border border-slate-200 rounded-lg">
+                        <span className="text-slate-500 font-medium text-sm sm:text-base">
                           verified.doctor/
                         </span>
                       </div>
@@ -231,21 +247,21 @@ export default function OnboardingPage() {
                           }}
                           onBlur={checkHandle}
                           placeholder="yourname"
-                          className="h-12"
+                          className="h-10 sm:h-12 text-sm sm:text-base"
                         />
                         {handleStatus === "checking" && (
-                          <Loader2 className="absolute right-3 top-3.5 w-5 h-5 animate-spin text-slate-400" />
+                          <Loader2 className="absolute right-3 top-2.5 sm:top-3.5 w-4 h-4 sm:w-5 sm:h-5 animate-spin text-slate-400" />
                         )}
                         {handleStatus === "available" && (
-                          <Check className="absolute right-3 top-3.5 w-5 h-5 text-emerald-500" />
+                          <Check className="absolute right-3 top-2.5 sm:top-3.5 w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
                         )}
                         {handleStatus === "taken" && (
-                          <X className="absolute right-3 top-3.5 w-5 h-5 text-red-500" />
+                          <X className="absolute right-3 top-2.5 sm:top-3.5 w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
                         )}
                       </div>
                     </div>
                     {handleStatus === "taken" && (
-                      <p className="text-sm text-red-500">
+                      <p className="text-xs sm:text-sm text-red-500">
                         This handle is already taken
                       </p>
                     )}
@@ -253,14 +269,14 @@ export default function OnboardingPage() {
 
                   {/* Full Name */}
                   <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name</Label>
+                    <Label htmlFor="fullName" className="text-sm sm:text-base">Full Name</Label>
                     <Input
                       id="fullName"
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Dr. Arjun Sharma"
-                      className="h-12"
+                      className="h-10 sm:h-12 text-sm sm:text-base"
                     />
                   </div>
                 </div>
@@ -269,10 +285,10 @@ export default function OnboardingPage() {
                   type="button"
                   onClick={() => setStep(2)}
                   disabled={!canProceedStep1}
-                  className="w-full h-12 mt-8 bg-gradient-to-r from-[#0099F7] to-[#0080CC] hover:from-[#0088E0] hover:to-[#0070B8] text-white font-semibold"
+                  className="w-full h-10 sm:h-12 mt-6 sm:mt-8 bg-gradient-to-r from-[#0099F7] to-[#0080CC] hover:from-[#0088E0] hover:to-[#0070B8] text-white font-semibold text-sm sm:text-base"
                 >
                   Continue
-                  <ArrowRight className="w-5 h-5 ml-2" />
+                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
                 </Button>
               </>
             )}
@@ -280,32 +296,32 @@ export default function OnboardingPage() {
             {/* Step 2: Professional Details */}
             {step === 2 && (
               <>
-                <div className="text-center mb-8">
-                  <h1 className="text-2xl font-bold text-slate-900 mb-2">
+                <div className="text-center mb-6 sm:mb-8">
+                  <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">
                     Professional Details
                   </h1>
-                  <p className="text-slate-600">
+                  <p className="text-sm sm:text-base text-slate-600">
                     Your qualifications and expertise
                   </p>
                 </div>
 
-                <div className="space-y-5">
+                <div className="space-y-4 sm:space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="specialty">Specialty *</Label>
+                    <Label htmlFor="specialty" className="text-sm sm:text-base">Specialty *</Label>
                     <Input
                       id="specialty"
                       type="text"
                       value={specialty}
                       onChange={(e) => setSpecialty(e.target.value)}
-                      placeholder="e.g. Cardiologist, Dermatologist, Pediatrician"
-                      className="h-12"
+                      placeholder="e.g. Cardiologist, Dermatologist"
+                      className="h-10 sm:h-12 text-sm sm:text-base"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="qualifications">
+                    <Label htmlFor="qualifications" className="text-sm sm:text-base">
                       Qualifications
-                      <span className="ml-1 text-slate-400 font-normal text-sm">
+                      <span className="ml-1 text-slate-400 font-normal text-xs sm:text-sm">
                         (optional)
                       </span>
                     </Label>
@@ -315,16 +331,16 @@ export default function OnboardingPage() {
                       value={qualifications}
                       onChange={(e) => setQualifications(e.target.value)}
                       placeholder="e.g. MBBS, MD (Cardiology), DM"
-                      className="h-12"
+                      className="h-10 sm:h-12 text-sm sm:text-base"
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="yearsExperience">
+                      <Label htmlFor="yearsExperience" className="text-sm sm:text-base">
                         Experience
-                        <span className="ml-1 text-slate-400 font-normal text-sm">
-                          (years)
+                        <span className="ml-1 text-slate-400 font-normal text-xs sm:text-sm">
+                          (yrs)
                         </span>
                       </Label>
                       <Input
@@ -335,14 +351,14 @@ export default function OnboardingPage() {
                         value={yearsExperience}
                         onChange={(e) => setYearsExperience(e.target.value)}
                         placeholder="12"
-                        className="h-12"
+                        className="h-10 sm:h-12 text-sm sm:text-base"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="registrationNumber">
-                        Reg. Number
-                        <span className="ml-1 text-slate-400 font-normal text-sm">
+                      <Label htmlFor="registrationNumber" className="text-sm sm:text-base">
+                        Reg. No.
+                        <span className="ml-1 text-slate-400 font-normal text-xs sm:text-sm hidden sm:inline">
                           (optional)
                         </span>
                       </Label>
@@ -352,18 +368,18 @@ export default function OnboardingPage() {
                         value={registrationNumber}
                         onChange={(e) => setRegistrationNumber(e.target.value)}
                         placeholder="MCI/12345"
-                        className="h-12"
+                        className="h-10 sm:h-12 text-sm sm:text-base"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="flex gap-4 mt-8">
+                <div className="flex gap-3 sm:gap-4 mt-6 sm:mt-8">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setStep(1)}
-                    className="flex-1 h-12"
+                    className="flex-1 h-10 sm:h-12 text-sm sm:text-base"
                   >
                     Back
                   </Button>
@@ -371,10 +387,10 @@ export default function OnboardingPage() {
                     type="button"
                     onClick={() => setStep(3)}
                     disabled={!canProceedStep2}
-                    className="flex-1 h-12 bg-gradient-to-r from-[#0099F7] to-[#0080CC] hover:from-[#0088E0] hover:to-[#0070B8] text-white font-semibold"
+                    className="flex-1 h-10 sm:h-12 bg-gradient-to-r from-[#0099F7] to-[#0080CC] hover:from-[#0088E0] hover:to-[#0070B8] text-white font-semibold text-sm sm:text-base"
                   >
                     Continue
-                    <ArrowRight className="w-5 h-5 ml-2" />
+                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
                   </Button>
                 </div>
               </>
@@ -383,70 +399,70 @@ export default function OnboardingPage() {
             {/* Step 3: Practice Details */}
             {step === 3 && (
               <>
-                <div className="text-center mb-8">
-                  <h1 className="text-2xl font-bold text-slate-900 mb-2">
+                <div className="text-center mb-6 sm:mb-8">
+                  <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">
                     Practice Details
                   </h1>
-                  <p className="text-slate-600">
+                  <p className="text-sm sm:text-base text-slate-600">
                     Where and how patients can reach you
                   </p>
                 </div>
 
-                <div className="space-y-5">
+                <div className="space-y-4 sm:space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="clinicName">Clinic/Hospital Name</Label>
+                    <Label htmlFor="clinicName" className="text-sm sm:text-base">Clinic/Hospital Name</Label>
                     <Input
                       id="clinicName"
                       type="text"
                       value={clinicName}
                       onChange={(e) => setClinicName(e.target.value)}
                       placeholder="HeartCare Clinic"
-                      className="h-12"
+                      className="h-10 sm:h-12 text-sm sm:text-base"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="clinicLocation">Location</Label>
+                    <Label htmlFor="clinicLocation" className="text-sm sm:text-base">Location</Label>
                     <Input
                       id="clinicLocation"
                       type="text"
                       value={clinicLocation}
                       onChange={(e) => setClinicLocation(e.target.value)}
                       placeholder="Bandra West, Mumbai"
-                      className="h-12"
+                      className="h-10 sm:h-12 text-sm sm:text-base"
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="languages">Languages</Label>
+                      <Label htmlFor="languages" className="text-sm sm:text-base">Languages</Label>
                       <Input
                         id="languages"
                         type="text"
                         value={languages}
                         onChange={(e) => setLanguages(e.target.value)}
                         placeholder="English, Hindi"
-                        className="h-12"
+                        className="h-10 sm:h-12 text-sm sm:text-base"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="consultationFee">Consultation Fee</Label>
+                      <Label htmlFor="consultationFee" className="text-sm sm:text-base">Fee</Label>
                       <Input
                         id="consultationFee"
                         type="text"
                         value={consultationFee}
                         onChange={(e) => setConsultationFee(e.target.value)}
                         placeholder="₹500-1000"
-                        className="h-12"
+                        className="h-10 sm:h-12 text-sm sm:text-base"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="services">
-                      Services Offered
-                      <span className="ml-1 text-slate-400 font-normal text-sm">
+                    <Label htmlFor="services" className="text-sm sm:text-base">
+                      Services
+                      <span className="ml-1 text-slate-400 font-normal text-xs sm:text-sm">
                         (comma separated)
                       </span>
                     </Label>
@@ -456,27 +472,27 @@ export default function OnboardingPage() {
                       value={services}
                       onChange={(e) => setServices(e.target.value)}
                       placeholder="ECG, Echocardiography, Stress Test"
-                      className="h-12"
+                      className="h-10 sm:h-12 text-sm sm:text-base"
                     />
                   </div>
                 </div>
 
-                <div className="flex gap-4 mt-8">
+                <div className="flex gap-3 sm:gap-4 mt-6 sm:mt-8">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setStep(2)}
-                    className="flex-1 h-12"
+                    className="flex-1 h-10 sm:h-12 text-sm sm:text-base"
                   >
                     Back
                   </Button>
                   <Button
                     type="button"
                     onClick={() => setStep(4)}
-                    className="flex-1 h-12 bg-gradient-to-r from-[#0099F7] to-[#0080CC] hover:from-[#0088E0] hover:to-[#0070B8] text-white font-semibold"
+                    className="flex-1 h-10 sm:h-12 bg-gradient-to-r from-[#0099F7] to-[#0080CC] hover:from-[#0088E0] hover:to-[#0070B8] text-white font-semibold text-sm sm:text-base"
                   >
                     Continue
-                    <ArrowRight className="w-5 h-5 ml-2" />
+                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
                   </Button>
                 </div>
               </>
@@ -485,21 +501,21 @@ export default function OnboardingPage() {
             {/* Step 4: Photo, Bio & Template */}
             {step === 4 && (
               <>
-                <div className="text-center mb-8">
-                  <h1 className="text-2xl font-bold text-slate-900 mb-2">
+                <div className="text-center mb-6 sm:mb-8">
+                  <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">
                     Final Touches
                   </h1>
-                  <p className="text-slate-600">
+                  <p className="text-sm sm:text-base text-slate-600">
                     Add your photo and choose a style
                   </p>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-5 sm:space-y-6">
                   {/* Profile Photo */}
                   <div className="space-y-2">
-                    <Label>Profile Photo</Label>
-                    <div className="flex items-center gap-4">
-                      <div className="relative w-20 h-20 rounded-full bg-slate-100 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden">
+                    <Label className="text-sm sm:text-base">Profile Photo</Label>
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-100 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0">
                         {profilePhoto ? (
                           <Image
                             src={profilePhoto}
@@ -508,10 +524,10 @@ export default function OnboardingPage() {
                             className="object-cover"
                           />
                         ) : (
-                          <Upload className="w-6 h-6 text-slate-400" />
+                          <Upload className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" />
                         )}
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 flex flex-wrap gap-2">
                         <input
                           type="file"
                           accept="image/*"
@@ -523,11 +539,12 @@ export default function OnboardingPage() {
                           <Button
                             type="button"
                             variant="outline"
-                            className="cursor-pointer"
+                            size="sm"
+                            className="cursor-pointer text-xs sm:text-sm"
                             asChild
                           >
                             <span>
-                              {profilePhoto ? "Change Photo" : "Upload Photo"}
+                              {profilePhoto ? "Change" : "Upload"}
                             </span>
                           </Button>
                         </label>
@@ -537,7 +554,7 @@ export default function OnboardingPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => setProfilePhoto(null)}
-                            className="ml-2 text-red-500 hover:text-red-600"
+                            className="text-red-500 hover:text-red-600 text-xs sm:text-sm"
                           >
                             Remove
                           </Button>
@@ -548,9 +565,9 @@ export default function OnboardingPage() {
 
                   {/* Bio */}
                   <div className="space-y-2">
-                    <Label htmlFor="bio">
+                    <Label htmlFor="bio" className="text-sm sm:text-base">
                       Short Bio
-                      <span className="ml-1 text-slate-400 font-normal text-sm">
+                      <span className="ml-1 text-slate-400 font-normal text-xs sm:text-sm">
                         (optional)
                       </span>
                     </Label>
@@ -558,10 +575,10 @@ export default function OnboardingPage() {
                       id="bio"
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
-                      placeholder="A brief introduction about yourself and your practice..."
+                      placeholder="A brief introduction about yourself..."
                       rows={3}
                       maxLength={500}
-                      className="resize-none"
+                      className="resize-none text-sm sm:text-base"
                     />
                     <p className="text-xs text-slate-400 text-right">
                       {bio.length}/500
@@ -570,47 +587,47 @@ export default function OnboardingPage() {
 
                   {/* Booking URL */}
                   <div className="space-y-2">
-                    <Label htmlFor="bookingUrl">
+                    <Label htmlFor="bookingUrl" className="text-sm sm:text-base">
                       Booking Link
-                      <span className="ml-1 text-slate-400 font-normal text-sm">
-                        (Practo, Calendly, etc.)
+                      <span className="ml-1 text-slate-400 font-normal text-xs sm:text-sm">
+                        (optional)
                       </span>
                     </Label>
                     <div className="relative">
-                      <ExternalLink className="absolute left-3 top-3.5 w-5 h-5 text-slate-400" />
+                      <ExternalLink className="absolute left-3 top-2.5 sm:top-3.5 w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
                       <Input
                         id="bookingUrl"
                         type="url"
                         value={externalBookingUrl}
                         onChange={(e) => setExternalBookingUrl(e.target.value)}
                         placeholder="https://practo.com/dr-sharma"
-                        className="h-12 pl-10"
+                        className="h-10 sm:h-12 pl-9 sm:pl-10 text-sm sm:text-base"
                       />
                     </div>
                   </div>
 
                   {/* Template Selection */}
-                  <div className="space-y-3">
-                    <Label className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-[#0099F7]" />
+                  <div className="space-y-2 sm:space-y-3">
+                    <Label className="flex items-center gap-2 text-sm sm:text-base">
+                      <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#0099F7]" />
                       Profile Template
                     </Label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3">
                       {TEMPLATES.map((template) => (
                         <button
                           key={template.id}
                           type="button"
                           onClick={() => setProfileTemplate(template.id)}
-                          className={`p-4 rounded-xl border-2 text-left transition-all ${
+                          className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 text-left transition-all ${
                             profileTemplate === template.id
                               ? "border-[#0099F7] bg-blue-50/50"
                               : "border-slate-200 hover:border-slate-300"
                           }`}
                         >
-                          <p className="font-medium text-slate-900">
+                          <p className="font-medium text-slate-900 text-sm sm:text-base">
                             {template.name}
                           </p>
-                          <p className="text-sm text-slate-500">
+                          <p className="text-xs sm:text-sm text-slate-500 line-clamp-1">
                             {template.description}
                           </p>
                         </button>
@@ -620,31 +637,31 @@ export default function OnboardingPage() {
                 </div>
 
                 {error && (
-                  <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200">
-                    <p className="text-sm text-red-600">{error}</p>
+                  <div className="mt-4 p-2.5 sm:p-3 rounded-lg bg-red-50 border border-red-200">
+                    <p className="text-xs sm:text-sm text-red-600">{error}</p>
                   </div>
                 )}
 
-                <div className="flex gap-4 mt-8">
+                <div className="flex gap-3 sm:gap-4 mt-6 sm:mt-8">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setStep(3)}
-                    className="flex-1 h-12"
+                    className="flex-1 h-10 sm:h-12 text-sm sm:text-base"
                   >
                     Back
                   </Button>
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="flex-1 h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold"
+                    className="flex-1 h-10 sm:h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold text-sm sm:text-base"
                   >
                     {isLoading ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
                     ) : (
                       <>
-                        <Check className="w-5 h-5 mr-2" />
-                        Publish Profile
+                        <Check className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
+                        Publish
                       </>
                     )}
                   </Button>
@@ -655,7 +672,7 @@ export default function OnboardingPage() {
         </motion.div>
 
         {/* Preview */}
-        <div className="mt-6 text-center text-sm text-slate-500">
+        <div className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-slate-500">
           Your profile will be live at{" "}
           <span className="font-medium text-[#0099F7]">
             verified.doctor/{handle || "yourname"}
@@ -663,5 +680,24 @@ export default function OnboardingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function OnboardingFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 flex items-center justify-center">
+      <div className="text-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#0099F7] mx-auto mb-4" />
+        <p className="text-slate-600">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={<OnboardingFallback />}>
+      <OnboardingForm />
+    </Suspense>
   );
 }

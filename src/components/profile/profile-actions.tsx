@@ -5,6 +5,7 @@ import { Download, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { SendInquiryDialog } from "./send-inquiry-dialog";
+import { trackEvent } from "@/lib/analytics";
 
 interface Profile {
   id: string;
@@ -24,6 +25,9 @@ export function ProfileActions({ profile }: ProfileActionsProps) {
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
 
   const handleSaveContact = () => {
+    // Track analytics event
+    trackEvent({ profileId: profile.id, eventType: "click_save_contact" });
+
     // Generate vCard
     const vcard = [
       "BEGIN:VCARD",
@@ -61,7 +65,10 @@ export function ProfileActions({ profile }: ProfileActionsProps) {
             Save Contact
           </Button>
           <Button
-            onClick={() => setIsInquiryOpen(true)}
+            onClick={() => {
+              trackEvent({ profileId: profile.id, eventType: "click_send_inquiry" });
+              setIsInquiryOpen(true);
+            }}
             className="flex-1 h-12 bg-gradient-to-r from-[#0099F7] to-[#0080CC] hover:from-[#0088E0] hover:to-[#0070B8] text-white"
           >
             <MessageSquare className="w-4 h-4 mr-2" />

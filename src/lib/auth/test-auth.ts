@@ -1,7 +1,14 @@
-import { cookies } from "next/headers";
+/**
+ * Auth module - uses Supabase Auth
+ *
+ * This file provides backward compatibility for code that imports from test-auth.
+ * All API routes and server components should use getAuth() from "@/lib/auth".
+ */
 
-const TEST_COOKIE_NAME = "test_auth_session";
+// Re-export server-side auth functions
+export { getAuth, getSession, signOut } from "./index";
 
+// Keep TestUser type for backward compatibility with existing code
 export interface TestUser {
   userId: string;
   email: string;
@@ -9,80 +16,34 @@ export interface TestUser {
 }
 
 /**
- * Get the current authenticated user.
- * In development with test auth enabled, checks for test session cookie.
- * In production, this would integrate with Clerk.
- */
-export async function getAuth(): Promise<{ userId: string | null }> {
-  // Check for test auth first (development only)
-  if (process.env.NEXT_PUBLIC_ENABLE_TEST_AUTH === "true") {
-    const testUser = await getTestUser();
-    if (testUser) {
-      return { userId: testUser.userId };
-    }
-  }
-
-  // In production, integrate with Clerk here
-  // For now, return null if no test session
-  return { userId: null };
-}
-
-/**
- * Get the full test user object from the session cookie.
+ * @deprecated Use getAuth() instead
  */
 export async function getTestUser(): Promise<TestUser | null> {
-  if (process.env.NEXT_PUBLIC_ENABLE_TEST_AUTH !== "true") {
+  // Dynamic import to avoid bundling server code in client
+  const { getAuth } = await import("./index");
+  const { user } = await getAuth();
+
+  if (!user) {
     return null;
   }
 
-  try {
-    const cookieStore = await cookies();
-    const testSession = cookieStore.get(TEST_COOKIE_NAME);
-
-    if (testSession) {
-      return JSON.parse(testSession.value) as TestUser;
-    }
-  } catch {
-    // Cookie parsing failed
-  }
-
-  return null;
+  return {
+    userId: user.id,
+    email: user.email,
+    name: "", // Name is stored in profile, not auth
+  };
 }
 
 /**
- * Create a test session with custom user data.
- * Generates a unique user ID based on the email to allow testing multiple accounts.
+ * @deprecated Test auth is no longer used - Supabase Auth handles sessions
  */
-export function createTestSession(params?: {
-  email?: string;
-  name?: string;
-}): TestUser {
-  const email = params?.email || process.env.TEST_USER_EMAIL || "test@verified.doctor";
-  const name = params?.name || process.env.TEST_USER_NAME || "Dr. Test User";
-
-  // Generate a unique user ID based on email hash
-  // This allows testing multiple accounts with different emails
-  const userId = `test_user_${simpleHash(email)}`;
-
-  return { userId, email, name };
+export function createTestSession(): TestUser {
+  throw new Error("createTestSession is deprecated. Use Supabase Auth signUp/signIn instead.");
 }
 
 /**
- * Simple hash function to generate consistent IDs from email.
- */
-function simpleHash(str: string): string {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return Math.abs(hash).toString(36);
-}
-
-/**
- * Check if test auth is enabled.
+ * @deprecated Test auth is no longer used
  */
 export function isTestAuthEnabled(): boolean {
-  return process.env.NEXT_PUBLIC_ENABLE_TEST_AUTH === "true";
+  return false;
 }

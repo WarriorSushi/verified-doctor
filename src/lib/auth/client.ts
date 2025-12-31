@@ -1,0 +1,55 @@
+import { createClient as createBrowserClient } from "@/lib/supabase/client";
+
+/**
+ * Client-side auth helpers using Supabase Auth
+ * Use these in client components ("use client")
+ */
+
+/**
+ * Sign up with email and password (client-side).
+ */
+export async function signUp(email: string, password: string, metadata?: { full_name?: string }) {
+  const supabase = createBrowserClient();
+  return supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: metadata,
+    },
+  });
+}
+
+/**
+ * Sign in with email and password (client-side).
+ */
+export async function signIn(email: string, password: string) {
+  const supabase = createBrowserClient();
+  return supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+}
+
+/**
+ * Sign out (client-side).
+ */
+export async function signOut() {
+  const supabase = createBrowserClient();
+  return supabase.auth.signOut();
+}
+
+/**
+ * Get current user (client-side).
+ */
+export async function getUser() {
+  const supabase = createBrowserClient();
+  return supabase.auth.getUser();
+}
+
+/**
+ * Subscribe to auth state changes (client-side).
+ */
+export function onAuthStateChange(callback: (event: string, session: unknown) => void) {
+  const supabase = createBrowserClient();
+  return supabase.auth.onAuthStateChange(callback);
+}

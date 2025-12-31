@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -8,11 +8,13 @@ import { Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import * as clientAuth from "@/lib/auth/client";
 
-export default function SignInPage() {
+function SignInForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const claimedHandle = searchParams.get("handle");
+  const redirectTo = searchParams.get("redirect");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,25 +27,41 @@ export default function SignInPage() {
     setIsLoading(true);
 
     try {
-      // In test auth mode, we'll create a test session
-      const response = await fetch("/api/test-auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+      // Sign in with Supabase Auth
+      const { data, error: signInError } = await clientAuth.signIn(
+        email,
+        password
+      );
 
-      if (!response.ok) {
+      if (signInError) {
+        throw new Error(signInError.message);
+      }
+
+      if (!data.user) {
         throw new Error("Failed to sign in");
       }
 
-      // If there's a claimed handle, go to onboarding, else dashboard
-      if (claimedHandle) {
+      // Determine redirect destination
+      if (redirectTo) {
+        router.push(redirectTo);
+      } else if (claimedHandle) {
         router.push(`/onboarding?handle=${claimedHandle}`);
       } else {
         router.push("/dashboard");
       }
-    } catch {
-      setError("Invalid email or password. Please try again.");
+    } catch (err) {
+      if (err instanceof Error) {
+        // Handle specific Supabase auth errors
+        if (err.message.includes("Invalid login credentials")) {
+          setError("Invalid email or password. Please try again.");
+        } else if (err.message.includes("Email not confirmed")) {
+          setError("Please verify your email before signing in.");
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -136,15 +154,34 @@ export default function SignInPage() {
           </Link>
         </p>
       </div>
-
-      {/* Dev mode notice */}
-      {process.env.NEXT_PUBLIC_ENABLE_TEST_AUTH === "true" && (
-        <div className="mt-6 p-3 rounded-lg bg-amber-50 border border-amber-200">
-          <p className="text-xs text-amber-700 text-center">
-            Development Mode: Using test authentication
-          </p>
-        </div>
-      )}
     </motion.div>
+  );
+}
+
+function SignInFormFallback() {
+  return (
+    <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8">
+      <div className="text-center mb-8">
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">
+          Welcome back
+        </h1>
+        <p className="text-slate-600">
+          Sign in to your Verified.Doctor account
+        </p>
+      </div>
+      <div className="space-y-4">
+        <div className="h-12 bg-slate-100 rounded-md animate-pulse" />
+        <div className="h-12 bg-slate-100 rounded-md animate-pulse" />
+        <div className="h-12 bg-slate-100 rounded-md animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<SignInFormFallback />}>
+      <SignInForm />
+    </Suspense>
   );
 }

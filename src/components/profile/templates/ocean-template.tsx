@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -15,10 +16,13 @@ import {
   ExternalLink,
   CheckCircle2,
   Waves,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileActions } from "../profile-actions";
 import { RecommendButton } from "../recommend-button";
+import { ProfileViewTracker } from "../profile-view-tracker";
 import { formatRecommendationCount, formatConnectionCount } from "@/lib/format-metrics";
 
 interface Profile {
@@ -71,16 +75,23 @@ const theme = {
 };
 
 export function OceanTemplate({ profile, connectedDoctors }: OceanTemplateProps) {
+  const [showFullBio, setShowFullBio] = useState(false);
   const recommendationText = formatRecommendationCount(profile.recommendation_count || 0);
   const connectionText = formatConnectionCount(profile.connection_count || 0);
   const services = profile.services?.split(",").map((s) => s.trim()).filter(Boolean) || [];
   const firstName = profile.full_name.split(" ")[0];
 
+  // Truncate bio to ~150 chars
+  const bioTruncated = profile.bio && profile.bio.length > 150
+    ? profile.bio.slice(0, 150).trim() + "..."
+    : profile.bio;
+  const showBioToggle = profile.bio && profile.bio.length > 150;
+
   return (
-    <div
-      className="min-h-screen"
-      style={{ backgroundColor: theme.bg }}
-    >
+    <div className="min-h-screen" style={{ backgroundColor: theme.bg }}>
+      {/* Analytics: Track profile view */}
+      <ProfileViewTracker profileId={profile.id} />
+
       {/* Ocean wave gradient background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div
@@ -91,28 +102,16 @@ export function OceanTemplate({ profile, connectedDoctors }: OceanTemplateProps)
           className="absolute -bottom-1/4 -right-1/4 w-3/4 h-3/4 rounded-full blur-3xl opacity-20"
           style={{ background: `radial-gradient(circle, ${theme.accent} 0%, transparent 70%)` }}
         />
-        {/* Subtle wave pattern at bottom */}
-        <svg
-          className="absolute bottom-0 left-0 right-0 w-full opacity-5"
-          viewBox="0 0 1440 320"
-          preserveAspectRatio="none"
-          style={{ height: "200px" }}
-        >
-          <path
-            fill={theme.primary}
-            d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-          />
-        </svg>
       </div>
 
       {/* Navbar */}
       <nav
-        className="relative z-20 px-6 py-4 border-b backdrop-blur-sm"
+        className="relative z-20 px-4 sm:px-6 py-3 border-b backdrop-blur-sm"
         style={{ borderColor: theme.border, backgroundColor: `${theme.bgCard}E6` }}
       >
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="relative w-7 h-7 transition-transform group-hover:scale-105">
+            <div className="relative w-6 h-6 sm:w-7 sm:h-7 transition-transform group-hover:scale-105">
               <Image
                 src="/verified-doctor-logo.svg"
                 alt="Verified.Doctor"
@@ -120,283 +119,202 @@ export function OceanTemplate({ profile, connectedDoctors }: OceanTemplateProps)
                 className="object-contain"
               />
             </div>
-            <span className="text-base font-semibold" style={{ color: theme.text }}>
+            <span className="text-sm sm:text-base font-semibold" style={{ color: theme.text }}>
               verified<span style={{ color: theme.primary }}>.doctor</span>
             </span>
           </Link>
 
           <Link
             href="/"
-            className="text-sm font-medium transition-colors flex items-center gap-1"
+            className="text-xs sm:text-sm font-medium transition-colors flex items-center gap-1"
             style={{ color: theme.primary }}
           >
-            <Waves className="w-4 h-4" />
+            <Waves className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             Claim yours
           </Link>
         </div>
       </nav>
 
       {/* Profile Content */}
-      <main className="relative z-10 max-w-xl mx-auto px-6 pt-8 pb-32">
-        {/* Hero Section */}
+      <main className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-28 sm:pb-32">
+        {/* Hero Section - Compact Layout */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-10"
+          className="mb-6"
         >
-          {/* Avatar with ocean ring */}
-          <div className="relative w-32 h-32 mx-auto mb-5">
-            <div
-              className="absolute inset-0 rounded-full animate-pulse"
-              style={{
-                background: `linear-gradient(135deg, ${theme.primaryLight}, ${theme.accent})`,
-                padding: "4px",
-              }}
-            >
-              <div className="w-full h-full rounded-full" style={{ backgroundColor: theme.bg }} />
-            </div>
-            <div className="absolute inset-1">
-              {profile.profile_photo_url ? (
-                <Image
-                  src={profile.profile_photo_url}
-                  alt={profile.full_name}
-                  fill
-                  className="object-cover rounded-full border-4 shadow-xl"
-                  style={{ borderColor: theme.bgCard }}
-                />
-              ) : (
+          {/* Mobile: Centered | Desktop: Side by side */}
+          <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
+            {/* Avatar */}
+            <div className="flex justify-center sm:justify-start">
+              <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0">
                 <div
-                  className="w-full h-full rounded-full flex items-center justify-center text-white text-3xl font-bold border-4 shadow-xl"
-                  style={{
-                    background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryDark})`,
-                    borderColor: theme.bgCard
-                  }}
-                >
-                  {profile.full_name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .slice(0, 2)
-                    .toUpperCase()}
+                  className="absolute inset-0 rounded-full opacity-30"
+                  style={{ background: `linear-gradient(135deg, ${theme.primaryLight}, ${theme.accent})` }}
+                />
+                {profile.profile_photo_url ? (
+                  <Image
+                    src={profile.profile_photo_url}
+                    alt={profile.full_name}
+                    fill
+                    className="object-cover rounded-full border-3 shadow-lg relative z-10"
+                    style={{ borderColor: theme.bgCard }}
+                  />
+                ) : (
+                  <div
+                    className="relative z-10 w-full h-full rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl font-bold border-3 shadow-lg"
+                    style={{
+                      background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryDark})`,
+                      borderColor: theme.bgCard
+                    }}
+                  >
+                    {profile.full_name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 text-center sm:text-left">
+              {/* Name + Badge */}
+              <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight" style={{ color: theme.text }}>
+                  {profile.full_name}
+                </h1>
+                {profile.is_verified && (
+                  <div className="relative w-5 h-5 sm:w-6 sm:h-6" title="Verified Doctor">
+                    <Image
+                      src="/verified-doctor-logo.svg"
+                      alt="Verified"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Specialty */}
+              <p className="font-medium text-sm sm:text-base mb-2" style={{ color: theme.primary }}>
+                {profile.specialty}
+              </p>
+
+              {/* Quick Stats - Inline */}
+              <div className="flex flex-wrap justify-center sm:justify-start gap-x-4 gap-y-1 text-xs sm:text-sm" style={{ color: theme.textMuted }}>
+                {profile.clinic_location && (
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5" style={{ color: theme.textLight }} />
+                    {profile.clinic_location}
+                  </span>
+                )}
+                {profile.years_experience && (
+                  <span className="inline-flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" style={{ color: theme.textLight }} />
+                    {profile.years_experience}+ yrs
+                  </span>
+                )}
+                {profile.consultation_fee && (
+                  <span className="inline-flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5" style={{ color: theme.textLight }} />
+                    {profile.consultation_fee}
+                  </span>
+                )}
+              </div>
+
+              {/* Metrics - Compact */}
+              {(recommendationText || connectionText) && (
+                <div className="flex justify-center sm:justify-start gap-4 mt-3">
+                  {recommendationText && (
+                    <div
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                      style={{ backgroundColor: `${theme.primary}15` }}
+                    >
+                      <ThumbsUp className="w-3.5 h-3.5" style={{ color: theme.primary }} />
+                      <span className="text-xs font-semibold" style={{ color: theme.primary }}>
+                        {profile.recommendation_count} {profile.recommendation_count === 1 ? "rec" : "recs"}
+                      </span>
+                    </div>
+                  )}
+                  {connectionText && (
+                    <div
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                      style={{ backgroundColor: theme.accentLight }}
+                    >
+                      <Users className="w-3.5 h-3.5" style={{ color: theme.text }} />
+                      <span className="text-xs font-semibold" style={{ color: theme.text }}>
+                        {profile.connection_count} connected
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           </div>
-
-          {/* Name + Verified Badge */}
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <h1 className="text-2xl font-bold tracking-tight" style={{ color: theme.text }}>
-              {profile.full_name}
-            </h1>
-            {profile.is_verified && (
-              <div className="relative w-6 h-6" title="Verified Doctor">
-                <Image
-                  src="/verified-doctor-logo.svg"
-                  alt="Verified"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Specialty */}
-          <p className="font-semibold mb-3" style={{ color: theme.primary }}>{profile.specialty}</p>
-
-          {/* Quick Info Pills */}
-          <div className="flex flex-wrap justify-center gap-2 text-sm">
-            {profile.qualifications && (
-              <span
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-                style={{ backgroundColor: theme.accentLight, color: theme.primaryDark }}
-              >
-                <GraduationCap className="w-3.5 h-3.5" />
-                {profile.qualifications}
-              </span>
-            )}
-            {profile.years_experience && (
-              <span
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-                style={{ backgroundColor: theme.accentLight, color: theme.primaryDark }}
-              >
-                <Clock className="w-3.5 h-3.5" />
-                {profile.years_experience}+ years
-              </span>
-            )}
-          </div>
         </motion.div>
 
-        {/* Bio */}
+        {/* Qualifications Badge */}
+        {profile.qualifications && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="flex justify-center sm:justify-start mb-4"
+          >
+            <span
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm"
+              style={{ backgroundColor: theme.accentLight, color: theme.primaryDark }}
+            >
+              <GraduationCap className="w-3.5 h-3.5" />
+              {profile.qualifications}
+            </span>
+          </motion.div>
+        )}
+
+        {/* Bio - Collapsible */}
         {profile.bio && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="mb-8"
-          >
-            <p className="leading-relaxed text-center" style={{ color: theme.textMuted }}>
-              {profile.bio}
-            </p>
-          </motion.div>
-        )}
-
-        {/* Metrics */}
-        {(recommendationText || connectionText) && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.15 }}
-            className="flex justify-center gap-8 mb-10"
-          >
-            {recommendationText && (
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1.5 mb-1" style={{ color: theme.primary }}>
-                  <ThumbsUp className="w-5 h-5" />
-                  <span className="text-2xl font-bold">{profile.recommendation_count}</span>
-                </div>
-                <p className="text-xs uppercase tracking-wider font-medium" style={{ color: theme.textLight }}>
-                  Recommendations
-                </p>
-              </div>
-            )}
-            {connectionText && (
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1.5 mb-1" style={{ color: theme.text }}>
-                  <Users className="w-5 h-5" />
-                  <span className="text-2xl font-bold">{profile.connection_count}</span>
-                </div>
-                <p className="text-xs uppercase tracking-wider font-medium" style={{ color: theme.textLight }}>
-                  Connections
-                </p>
-              </div>
-            )}
-          </motion.div>
-        )}
-
-        {/* Details Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="rounded-2xl shadow-lg p-6 mb-6"
-          style={{ backgroundColor: theme.bgCard, border: `1px solid ${theme.border}` }}
-        >
-          <div className="grid gap-5">
-            {(profile.clinic_name || profile.clinic_location) && (
-              <div className="flex items-start gap-3">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: `${theme.primary}15` }}
-                >
-                  <MapPin className="w-5 h-5" style={{ color: theme.primary }} />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-0.5" style={{ color: theme.textLight }}>
-                    Location
-                  </p>
-                  <p className="font-medium" style={{ color: theme.text }}>
-                    {[profile.clinic_name, profile.clinic_location].filter(Boolean).join(", ")}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {profile.languages && (
-              <div className="flex items-start gap-3">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: `${theme.primary}15` }}
-                >
-                  <Globe className="w-5 h-5" style={{ color: theme.primary }} />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-0.5" style={{ color: theme.textLight }}>
-                    Languages
-                  </p>
-                  <p className="font-medium" style={{ color: theme.text }}>{profile.languages}</p>
-                </div>
-              </div>
-            )}
-
-            {profile.consultation_fee && (
-              <div className="flex items-start gap-3">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: `${theme.primary}15` }}
-                >
-                  <Sparkles className="w-5 h-5" style={{ color: theme.primary }} />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-0.5" style={{ color: theme.textLight }}>
-                    Consultation
-                  </p>
-                  <p className="font-medium" style={{ color: theme.text }}>{profile.consultation_fee}</p>
-                </div>
-              </div>
-            )}
-
-            {profile.registration_number && (
-              <div className="flex items-start gap-3">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: `${theme.primary}15` }}
-                >
-                  <CheckCircle2 className="w-5 h-5" style={{ color: theme.primary }} />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-0.5" style={{ color: theme.textLight }}>
-                    Registration
-                  </p>
-                  <p className="font-medium" style={{ color: theme.text }}>{profile.registration_number}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Services */}
-        {services.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.25 }}
+            transition={{ duration: 0.4, delay: 0.15 }}
             className="mb-6"
           >
-            <p className="text-xs font-semibold uppercase tracking-wider mb-3 text-center" style={{ color: theme.textLight }}>
-              Services Offered
+            <p className="text-sm sm:text-base leading-relaxed" style={{ color: theme.textMuted }}>
+              {showFullBio ? profile.bio : bioTruncated}
             </p>
-            <div className="flex flex-wrap justify-center gap-2">
-              {services.map((service, i) => (
-                <span
-                  key={i}
-                  className="px-4 py-2 rounded-full text-sm font-medium shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5"
-                  style={{
-                    backgroundColor: theme.bgCard,
-                    color: theme.text,
-                    border: `1px solid ${theme.border}`,
-                  }}
-                >
-                  {service}
-                </span>
-              ))}
-            </div>
+            {showBioToggle && (
+              <button
+                onClick={() => setShowFullBio(!showFullBio)}
+                className="mt-1 text-sm font-medium inline-flex items-center gap-1"
+                style={{ color: theme.primary }}
+              >
+                {showFullBio ? (
+                  <>Show less <ChevronUp className="w-4 h-4" /></>
+                ) : (
+                  <>Read more <ChevronDown className="w-4 h-4" /></>
+                )}
+              </button>
+            )}
           </motion.div>
         )}
 
-        {/* Book Appointment */}
+        {/* Book Appointment - Prominent */}
         {profile.external_booking_url && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
             className="mb-6"
           >
             <Button
-              className="w-full h-12 rounded-xl font-semibold text-white shadow-lg transition-all hover:shadow-xl hover:-translate-y-0.5"
+              className="w-full h-11 sm:h-12 rounded-xl font-medium text-white shadow-lg"
               style={{
                 background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryDark})`,
-                boxShadow: `0 10px 30px -10px ${theme.primary}60`,
+                boxShadow: `0 8px 24px ${theme.primary}30`
               }}
               asChild
             >
@@ -407,29 +325,143 @@ export function OceanTemplate({ profile, connectedDoctors }: OceanTemplateProps)
               >
                 <Calendar className="w-4 h-4 mr-2" />
                 Book Appointment
-                <ExternalLink className="w-4 h-4 ml-2 opacity-60" />
+                <ExternalLink className="w-4 h-4 ml-2 opacity-50" />
               </a>
             </Button>
+          </motion.div>
+        )}
+
+        {/* Details Grid - 2 columns on tablet+ */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.25 }}
+          className="rounded-xl shadow-sm p-4 sm:p-5 mb-5"
+          style={{ backgroundColor: theme.bgCard, border: `1px solid ${theme.border}` }}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Location */}
+            {(profile.clinic_name || profile.clinic_location) && (
+              <div className="flex items-start gap-3">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: `${theme.primary}15` }}
+                >
+                  <MapPin className="w-4 h-4" style={{ color: theme.primary }} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide" style={{ color: theme.textLight }}>
+                    Location
+                  </p>
+                  <p className="text-sm font-medium truncate" style={{ color: theme.text }}>
+                    {[profile.clinic_name, profile.clinic_location].filter(Boolean).join(", ")}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Languages */}
+            {profile.languages && (
+              <div className="flex items-start gap-3">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: `${theme.primary}15` }}
+                >
+                  <Globe className="w-4 h-4" style={{ color: theme.primary }} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide" style={{ color: theme.textLight }}>
+                    Languages
+                  </p>
+                  <p className="text-sm font-medium" style={{ color: theme.text }}>{profile.languages}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Consultation Fee */}
+            {profile.consultation_fee && (
+              <div className="flex items-start gap-3">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: `${theme.primary}15` }}
+                >
+                  <Sparkles className="w-4 h-4" style={{ color: theme.primary }} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide" style={{ color: theme.textLight }}>
+                    Consultation
+                  </p>
+                  <p className="text-sm font-medium" style={{ color: theme.text }}>{profile.consultation_fee}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Registration */}
+            {profile.registration_number && (
+              <div className="flex items-start gap-3">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: `${theme.primary}15` }}
+                >
+                  <CheckCircle2 className="w-4 h-4" style={{ color: theme.primary }} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide" style={{ color: theme.textLight }}>
+                    Registration
+                  </p>
+                  <p className="text-sm font-medium" style={{ color: theme.text }}>{profile.registration_number}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Services */}
+        {services.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
+            className="mb-5"
+          >
+            <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide mb-2" style={{ color: theme.textLight }}>
+              Services
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {services.map((service, i) => (
+                <span
+                  key={i}
+                  className="px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium shadow-sm"
+                  style={{
+                    backgroundColor: theme.bgCard,
+                    border: `1px solid ${theme.border}`,
+                    color: theme.text
+                  }}
+                >
+                  {service}
+                </span>
+              ))}
+            </div>
           </motion.div>
         )}
 
         {/* Connected Doctors */}
         {connectedDoctors.length > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.35 }}
-            className="mb-6"
+            transition={{ duration: 0.4, delay: 0.35 }}
+            className="mb-5"
           >
-            <p className="text-xs font-semibold uppercase tracking-wider mb-4 text-center" style={{ color: theme.textLight }}>
+            <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide mb-2" style={{ color: theme.textLight }}>
               Professional Network
             </p>
-            <div className="flex justify-center -space-x-3">
-              {connectedDoctors.slice(0, 5).map((doctor) => (
+            <div className="flex -space-x-2">
+              {connectedDoctors.slice(0, 6).map((doctor) => (
                 <Link
                   key={doctor.id}
                   href={`/${doctor.handle}`}
-                  className="relative w-11 h-11 rounded-full border-3 shadow-md hover:z-10 hover:scale-110 transition-transform"
+                  className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 shadow-sm hover:z-10 hover:scale-110 transition-transform"
                   style={{ borderColor: theme.bgCard }}
                   title={doctor.full_name}
                 >
@@ -442,7 +474,7 @@ export function OceanTemplate({ profile, connectedDoctors }: OceanTemplateProps)
                     />
                   ) : (
                     <div
-                      className="w-full h-full rounded-full flex items-center justify-center text-xs font-bold text-white"
+                      className="w-full h-full rounded-full flex items-center justify-center text-white text-xs font-bold"
                       style={{ background: `linear-gradient(135deg, ${theme.primaryLight}, ${theme.primary})` }}
                     >
                       {doctor.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
@@ -450,12 +482,12 @@ export function OceanTemplate({ profile, connectedDoctors }: OceanTemplateProps)
                   )}
                 </Link>
               ))}
-              {connectedDoctors.length > 5 && (
+              {connectedDoctors.length > 6 && (
                 <div
-                  className="w-11 h-11 rounded-full border-3 shadow-md flex items-center justify-center text-xs font-bold"
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 shadow-sm flex items-center justify-center text-xs font-medium"
                   style={{ backgroundColor: theme.accentLight, borderColor: theme.bgCard, color: theme.primary }}
                 >
-                  +{connectedDoctors.length - 5}
+                  +{connectedDoctors.length - 6}
                 </div>
               )}
             </div>
@@ -464,16 +496,16 @@ export function OceanTemplate({ profile, connectedDoctors }: OceanTemplateProps)
 
         {/* Recommendation Section */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="rounded-2xl p-6 text-center"
+          transition={{ duration: 0.4, delay: 0.4 }}
+          className="rounded-xl p-4 sm:p-5 text-center"
           style={{
             background: `linear-gradient(135deg, ${theme.accentLight}, ${theme.accent}40)`,
-            border: `1px solid ${theme.accent}60`,
+            border: `1px solid ${theme.accent}60`
           }}
         >
-          <p className="mb-4" style={{ color: theme.text }}>
+          <p className="text-sm mb-3" style={{ color: theme.text }}>
             Had a great experience with {firstName}?
           </p>
           <RecommendButton profileId={profile.id} />

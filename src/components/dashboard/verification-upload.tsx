@@ -178,7 +178,7 @@ export function VerificationUpload({
           <p className="font-medium">Verification under review</p>
         </div>
         <p className="text-sm text-amber-600 mt-1 ml-7">
-          We're reviewing your documents. This usually takes 1-2 business days.
+          We&apos;re reviewing your documents. This usually takes 1-2 business days.
         </p>
       </div>
     );

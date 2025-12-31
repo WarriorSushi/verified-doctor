@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { trackEvent } from "@/lib/analytics";
 
 interface SendInquiryDialogProps {
   open: boolean;
@@ -57,6 +58,8 @@ export function SendInquiryDialog({
         throw new Error(data.error || "Failed to send message");
       }
 
+      // Track successful inquiry
+      trackEvent({ profileId, eventType: "inquiry_sent" });
       setStatus("success");
       toast.success("Message sent successfully!");
     } catch (err) {
@@ -95,7 +98,7 @@ export function SendInquiryDialog({
               <Check className="w-8 h-8 text-emerald-600" />
             </div>
             <p className="text-slate-600">
-              You'll receive a reply via SMS to the phone number you provided.
+              You&apos;ll receive a reply via SMS to the phone number you provided.
             </p>
             <Button onClick={handleClose} className="mt-4">
               Close
@@ -125,7 +128,7 @@ export function SendInquiryDialog({
                 required
               />
               <p className="text-xs text-slate-500">
-                Doctor's reply will be sent to this number
+                Doctor&apos;s reply will be sent to this number
               </p>
             </div>
 

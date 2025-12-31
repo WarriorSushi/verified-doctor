@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getAuth } from "@/lib/auth/test-auth";
+import { getAuth } from "@/lib/auth";
 
 const createMessageSchema = z.object({
   profileId: z.string().uuid("Invalid profile ID"),
@@ -100,11 +100,14 @@ export async function GET() {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
-    // Get messages
-    const { data: messages, error } = await supabase
+    // Get messages (filter out deleted, order pinned first)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: messages, error } = await (supabase as any)
       .from("messages")
       .select("*")
       .eq("profile_id", profile.id)
+      .is("deleted_at", null)
+      .order("is_pinned", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false });
 
     if (error) {

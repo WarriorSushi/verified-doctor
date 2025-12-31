@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -8,8 +8,9 @@ import { Loader2, ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import * as clientAuth from "@/lib/auth/client";
 
-export default function SignUpPage() {
+function SignUpForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const claimedHandle = searchParams.get("handle");
@@ -27,18 +28,18 @@ export default function SignUpPage() {
     setIsLoading(true);
 
     try {
-      // In test auth mode, we'll create a test session
-      const response = await fetch("/api/test-auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          name,
-          handle: claimedHandle,
-        }),
-      });
+      // Sign up with Supabase Auth
+      const { data, error: signUpError } = await clientAuth.signUp(
+        email,
+        password,
+        { full_name: name }
+      );
 
-      if (!response.ok) {
+      if (signUpError) {
+        throw new Error(signUpError.message);
+      }
+
+      if (!data.user) {
         throw new Error("Failed to create account");
       }
 
@@ -48,8 +49,19 @@ export default function SignUpPage() {
       if (inviteCode) params.set("invite", inviteCode);
       const queryString = params.toString();
       router.push(`/onboarding${queryString ? `?${queryString}` : ""}`);
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err) {
+      if (err instanceof Error) {
+        // Handle specific Supabase auth errors
+        if (err.message.includes("already registered")) {
+          setError("An account with this email already exists. Please sign in.");
+        } else if (err.message.includes("password")) {
+          setError("Password must be at least 6 characters long.");
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -114,10 +126,10 @@ export default function SignUpPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            minLength={8}
+            minLength={6}
             className="h-12"
           />
-          <p className="text-xs text-slate-500">Must be at least 8 characters</p>
+          <p className="text-xs text-slate-500">Must be at least 6 characters</p>
         </div>
 
         {error && (
@@ -154,15 +166,32 @@ export default function SignUpPage() {
           </Link>
         </p>
       </div>
-
-      {/* Dev mode notice */}
-      {process.env.NEXT_PUBLIC_ENABLE_TEST_AUTH === "true" && (
-        <div className="mt-6 p-3 rounded-lg bg-amber-50 border border-amber-200">
-          <p className="text-xs text-amber-700 text-center">
-            Development Mode: Using test authentication
-          </p>
-        </div>
-      )}
     </motion.div>
+  );
+}
+
+function SignUpFormFallback() {
+  return (
+    <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8">
+      <div className="text-center mb-8">
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">
+          Create your account
+        </h1>
+      </div>
+      <div className="space-y-4">
+        <div className="h-12 bg-slate-100 rounded-md animate-pulse" />
+        <div className="h-12 bg-slate-100 rounded-md animate-pulse" />
+        <div className="h-12 bg-slate-100 rounded-md animate-pulse" />
+        <div className="h-12 bg-slate-100 rounded-md animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={<SignUpFormFallback />}>
+      <SignUpForm />
+    </Suspense>
   );
 }

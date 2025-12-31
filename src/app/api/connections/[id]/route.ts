@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getAuth } from "@/lib/auth/test-auth";
+import { getAuth } from "@/lib/auth";
 
 const updateConnectionSchema = z.object({
   action: z.enum(["accept", "reject"]),
@@ -162,8 +162,8 @@ export async function DELETE(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Note: Decrement counts when disconnecting (TODO: create decrement function)
-    // For now, we just delete the connection record
+    // Only decrement counts if this was an accepted connection
+    const wasAccepted = connection.status === "accepted";
 
     // Delete the connection
     const { error: deleteError } = await supabase
@@ -177,6 +177,24 @@ export async function DELETE(request: Request, { params }: RouteParams) {
         { error: "Failed to delete connection" },
         { status: 500 }
       );
+    }
+
+    // Decrement connection counts for both users if it was an accepted connection
+    if (wasAccepted) {
+      // Get current counts and decrement
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, connection_count")
+        .in("id", [connection.requester_id, connection.receiver_id]);
+
+      if (profiles) {
+        for (const p of profiles) {
+          await supabase
+            .from("profiles")
+            .update({ connection_count: Math.max(0, (p.connection_count || 0) - 1) })
+            .eq("id", p.id);
+        }
+      }
     }
 
     return NextResponse.json({ success: true });

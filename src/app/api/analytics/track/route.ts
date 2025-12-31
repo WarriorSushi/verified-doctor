@@ -1,0 +1,94 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
+
+const trackEventSchema = z.object({
+  profileId: z.string().uuid(),
+  eventType: z.enum([
+    "profile_view",
+    "click_save_contact",
+    "click_book_appointment",
+    "click_send_inquiry",
+    "click_recommend",
+    "inquiry_sent",
+    "recommendation_given",
+  ]),
+  viewerProfileId: z.string().uuid().optional(),
+  isVerifiedViewer: z.boolean().optional(),
+  sessionId: z.string().optional(),
+  visitorId: z.string().optional(),
+  deviceType: z.enum(["mobile", "tablet", "desktop"]).optional(),
+  referrer: z.string().optional(),
+});
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const validatedData = trackEventSchema.parse(body);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = await createClient() as any;
+
+    // Get IP address from headers
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const realIp = request.headers.get("x-real-ip");
+    const visitorIp = forwardedFor?.split(",")[0] || realIp || "unknown";
+
+    // Get user agent
+    const userAgent = request.headers.get("user-agent") || "";
+
+    // Detect device type from user agent if not provided
+    let deviceType = validatedData.deviceType;
+    if (!deviceType) {
+      const ua = userAgent.toLowerCase();
+      if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+        deviceType = "tablet";
+      } else if (/mobile|iphone|ipod|android|blackberry|opera mini|iemobile/i.test(ua)) {
+        deviceType = "mobile";
+      } else {
+        deviceType = "desktop";
+      }
+    }
+
+    // Generate visitor fingerprint from headers if not provided
+    let visitorId = validatedData.visitorId;
+    if (!visitorId) {
+      const acceptLang = request.headers.get("accept-language") || "";
+      const acceptEnc = request.headers.get("accept-encoding") || "";
+      const fingerprintStr = `${userAgent}|${acceptLang}|${acceptEnc}`;
+      let hash = 0;
+      for (let i = 0; i < fingerprintStr.length; i++) {
+        const char = fingerprintStr.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      visitorId = Math.abs(hash).toString(16);
+    }
+
+    // Insert the analytics event
+    const { error } = await supabase.from("analytics_events").insert({
+      profile_id: validatedData.profileId,
+      event_type: validatedData.eventType,
+      visitor_id: visitorId,
+      visitor_ip: visitorIp,
+      viewer_profile_id: validatedData.viewerProfileId || null,
+      is_verified_viewer: validatedData.isVerifiedViewer || false,
+      referrer: validatedData.referrer || null,
+      user_agent: userAgent,
+      device_type: deviceType,
+      session_id: validatedData.sessionId || null,
+    });
+
+    if (error) {
+      console.error("Failed to track analytics event:", error);
+      // Don't return error to client - analytics should fail silently
+      return NextResponse.json({ success: true });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Analytics tracking error:", error);
+    // Always return success to avoid breaking the client
+    return NextResponse.json({ success: true });
+  }
+}
