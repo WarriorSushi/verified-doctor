@@ -182,10 +182,10 @@ export default async function DashboardPage() {
             Quick Actions
           </h2>
           <div className="space-y-2 sm:space-y-3">
-            <Button variant="outline" size="sm" className="w-full justify-start text-xs sm:text-sm" asChild>
+            <Button size="default" className="w-full justify-center text-sm font-semibold bg-gradient-to-r from-[#0099F7] to-[#0080CC] hover:from-[#0088E0] hover:to-[#0070B8] shadow-md hover:shadow-lg transition-all" asChild>
               <Link href={`/${profile.handle}`} target="_blank">
-                <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-                View Public Profile
+                <ExternalLink className="w-4 h-4 mr-2" />
+                View Your Public Profile
               </Link>
             </Button>
             <Button variant="outline" size="sm" className="w-full justify-start text-xs sm:text-sm" asChild>
