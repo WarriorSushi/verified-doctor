@@ -1,0 +1,32 @@
+---
+name: Feature Request
+about: Suggest an idea for this project
+title: '[FEATURE] '
+labels: enhancement
+assignees: ''
+---
+
+## Problem Statement
+
+A clear and concise description of what the problem is.
+
+Example: "As a doctor, I'm frustrated when I can't..."
+
+## Proposed Solution
+
+A clear and concise description of what you want to happen.
+
+## Alternatives Considered
+
+A clear and concise description of any alternative solutions or features you've considered.
+
+## Additional Context
+
+Add any other context, mockups, or screenshots about the feature request here.
+
+## Would you be willing to contribute this feature?
+
+- [ ] Yes, I'd like to implement this
+- [ ] I can help with testing
+- [ ] I can help with documentation
+- [ ] No, but I'd love to see it built

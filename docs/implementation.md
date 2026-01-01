@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides step-by-step instructions to build Verified.doctor. No code snippets — just clear, plain English directions that you can hand to an AI coding assistant (Cursor, Claude, Copilot) or follow yourself.
+This document provides step-by-step instructions to build Verified.doctor with clear, plain English directions for each phase.
 
 ---
 
@@ -584,17 +584,3 @@ Test the complete flows:
 17. Testing all flows
 18. Deploy and launch
 
----
-
-## Handoff Notes for AI Coding Assistants
-
-When using this document with Cursor, Claude, or other AI coding tools:
-
-1. Feed the PRD.md first for context
-2. Feed the TECHSTACK.md for tech decisions
-3. Feed this IMPLEMENTATION.md for step-by-step guidance
-4. Feed the DESIGN.md for visual/styling guidelines
-
-For each step, ask the AI to implement that specific piece. Be specific about which step you're on. Example prompt: "We're on Step 5.3 of the implementation guide. Build the Profile Header component according to the design spec."
-
-The documents are designed to give the AI all the context it needs without ambiguity.
