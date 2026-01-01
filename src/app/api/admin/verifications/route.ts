@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { verifyAdminSession } from "@/lib/admin-auth";
 
 export async function GET() {
@@ -10,6 +10,7 @@ export async function GET() {
     }
 
     const supabase = await createClient();
+    const adminSupabase = createAdminClient();
 
     // Get all profiles with pending verification
     const { data: pendingProfiles, error: profilesError } = await supabase
@@ -38,10 +39,24 @@ export async function GET() {
       console.error("Error fetching documents:", docsError);
     }
 
+    // Generate signed URLs for each document (verification-docs is a private bucket)
+    const documentsWithUrls = await Promise.all(
+      (documents || []).map(async (doc) => {
+        const { data: signedUrlData } = await adminSupabase.storage
+          .from("verification-docs")
+          .createSignedUrl(doc.document_url, 3600); // 1 hour expiry
+
+        return {
+          ...doc,
+          document_url: signedUrlData?.signedUrl || doc.document_url,
+        };
+      })
+    );
+
     // Combine profiles with their documents
     const verificationsWithDocs = pendingProfiles?.map((profile) => ({
       ...profile,
-      documents: documents?.filter((doc) => doc.profile_id === profile.id) || [],
+      documents: documentsWithUrls.filter((doc) => doc.profile_id === profile.id),
     }));
 
     return NextResponse.json({ verifications: verificationsWithDocs });

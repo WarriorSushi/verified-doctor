@@ -17,7 +17,7 @@ export function Footer() {
                 src="/verified-doctor-logo.svg"
                 alt="Verified.Doctor"
                 fill
-                className="object-contain brightness-0 invert"
+                className="object-contain"
               />
             </div>
             <span className="text-lg font-semibold text-white tracking-tight">

@@ -44,14 +44,14 @@ export function DashboardNav({ unreadCount, pendingConnectionsCount = 0 }: Dashb
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap",
+                  "flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-3 sm:py-3 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap",
                   isActive
                     ? "border-[#0099F7] text-[#0099F7]"
                     : "border-transparent text-slate-600 hover:text-slate-900"
                 )}
               >
-                <Icon className="w-4 h-4" />
-                <span className="hidden xs:inline sm:inline">{item.label}</span>
+                <Icon className="w-4 h-4 sm:w-4 sm:h-4" />
+                <span>{item.label}</span>
                 {badgeCount > 0 && (
                   <span className="ml-0.5 sm:ml-1 px-1.5 py-0.5 text-[10px] sm:text-xs font-bold bg-red-500 text-white rounded-full min-w-[18px] text-center">
                     {badgeCount}

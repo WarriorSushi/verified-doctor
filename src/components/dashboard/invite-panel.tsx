@@ -74,7 +74,9 @@ export function InvitePanel({ doctorName, currentConnectionCount }: InvitePanelP
     const url = inviteUrl || (await getNewInviteUrl());
     if (url) {
       const message = `Hey! I'm on Verified.Doctor - a platform for verified physicians. Join me and let's connect professionally: ${url}`;
-      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      // Use location.href for better mobile compatibility (window.open can be blocked)
+      window.location.href = whatsappUrl;
     }
   };
 

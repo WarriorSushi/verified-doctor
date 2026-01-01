@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getAuth } from "@/lib/auth";
 import { DashboardNav } from "@/components/dashboard/dashboard-nav";
 import { UserMenu } from "@/components/dashboard/user-menu";
+import { InviteProcessor } from "@/components/dashboard/invite-processor";
 
 export default async function DashboardLayout({
   children,
@@ -97,6 +99,11 @@ export default async function DashboardLayout({
           pendingConnectionsCount={pendingConnectionsCount || 0}
         />
       </header>
+
+      {/* Invite Processor - handles invite codes from URL */}
+      <Suspense fallback={null}>
+        <InviteProcessor />
+      </Suspense>
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-8">{children}</main>

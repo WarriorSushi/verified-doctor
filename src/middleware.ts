@@ -62,16 +62,22 @@ export async function middleware(request: NextRequest) {
       .eq("user_id", user.id)
       .single();
 
+    // Get invite code if present
+    const inviteCode = request.nextUrl.searchParams.get("invite");
+    const handle = request.nextUrl.searchParams.get("handle");
+
     if (!profile) {
       // No profile yet, redirect to onboarding
-      const handle = request.nextUrl.searchParams.get("handle");
       const redirectUrl = new URL("/onboarding", request.url);
       if (handle) redirectUrl.searchParams.set("handle", handle);
+      if (inviteCode) redirectUrl.searchParams.set("invite", inviteCode);
       return NextResponse.redirect(redirectUrl);
     }
 
-    // Has profile, redirect to dashboard
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    // Has profile, redirect to dashboard (preserve invite code for processing)
+    const redirectUrl = new URL("/dashboard", request.url);
+    if (inviteCode) redirectUrl.searchParams.set("invite", inviteCode);
+    return NextResponse.redirect(redirectUrl);
   }
 
   return supabaseResponse;
