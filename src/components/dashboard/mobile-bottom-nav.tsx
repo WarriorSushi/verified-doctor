@@ -28,8 +28,8 @@ export function MobileBottomNav({ unreadCount, pendingConnectionsCount = 0 }: Mo
   };
 
   return (
-    <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
-      <div className="flex justify-around items-center h-16">
+    <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 shadow-[0_-2px_16px_rgba(0,0,0,0.1)]" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+      <div className="flex justify-around items-stretch h-[60px] px-1">
         {navItems.map((item) => {
           const isActive =
             item.href === "/dashboard"
@@ -43,29 +43,29 @@ export function MobileBottomNav({ unreadCount, pendingConnectionsCount = 0 }: Mo
               key={item.href}
               href={item.href}
               className={cn(
-                "relative flex flex-col items-center justify-center gap-0.5 flex-1 py-2 transition-colors",
+                "relative flex flex-col items-center justify-center gap-1 flex-1 mx-0.5 my-1.5 rounded-xl transition-all",
                 isActive
-                  ? "text-[#0099F7]"
-                  : "text-slate-400 active:text-slate-600"
+                  ? "bg-sky-50 text-sky-600"
+                  : "text-slate-400 active:bg-slate-100 active:text-slate-600"
               )}
             >
               <div className="relative">
-                <Icon className={cn("w-5 h-5", isActive && "stroke-[2.5]")} />
+                <Icon className={cn(
+                  "w-6 h-6 transition-all",
+                  isActive ? "stroke-[2.5] text-sky-600" : "stroke-[1.8] text-slate-400"
+                )} />
                 {badgeCount > 0 && (
-                  <span className="absolute -top-1.5 -right-2 px-1 py-0.5 text-[9px] font-bold bg-red-500 text-white rounded-full min-w-[14px] text-center leading-none">
+                  <span className="absolute -top-1 -right-1.5 px-1 py-0.5 text-[9px] font-bold bg-red-500 text-white rounded-full min-w-[16px] text-center leading-none shadow-sm">
                     {badgeCount > 9 ? "9+" : badgeCount}
                   </span>
                 )}
               </div>
               <span className={cn(
-                "text-[10px] font-medium",
-                isActive ? "text-[#0099F7]" : "text-slate-500"
+                "text-[10px] font-semibold tracking-tight",
+                isActive ? "text-sky-600" : "text-slate-400"
               )}>
                 {item.label}
               </span>
-              {isActive && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#0099F7] rounded-full" />
-              )}
             </Link>
           );
         })}

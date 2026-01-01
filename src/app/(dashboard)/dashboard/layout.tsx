@@ -78,23 +78,23 @@ export default async function DashboardLayout({
         </div>
       </header>
 
-      {/* Action Bar - Soft warm tone */}
-      <div className="sticky top-[57px] sm:top-[105px] z-40 bg-gradient-to-r from-slate-800 to-slate-700 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-center gap-3 sm:gap-4 py-3 sm:py-3.5">
+      {/* Action Bar - Sleek light blue */}
+      <div className="sticky top-[57px] sm:top-[105px] z-40 bg-gradient-to-r from-sky-50 via-blue-50 to-indigo-50 border-b border-sky-100/80">
+        <div className="max-w-6xl mx-auto px-3 sm:px-6">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 py-2 sm:py-2.5">
             <Link
               href="/dashboard/profile-builder"
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2.5 bg-white/10 hover:bg-white/20 text-white px-5 sm:px-6 py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.98] border border-white/10"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white hover:bg-sky-50 text-sky-700 px-4 sm:px-5 py-2 rounded-lg font-medium text-sm transition-all active:scale-[0.98] border border-sky-200 shadow-sm"
             >
-              <Pencil className="w-4 h-4" />
+              <Pencil className="w-3.5 h-3.5" />
               <span>Edit Public Page</span>
             </Link>
             <Link
               href={`/${profile.handle}`}
               target="_blank"
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2.5 bg-white hover:bg-slate-50 text-slate-800 px-5 sm:px-6 py-3 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] shadow-sm"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 text-white px-4 sm:px-5 py-2 rounded-lg font-medium text-sm transition-all active:scale-[0.98] shadow-sm"
             >
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-3.5 h-3.5" />
               <span>View Public Page</span>
             </Link>
           </div>

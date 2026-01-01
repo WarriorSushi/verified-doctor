@@ -477,26 +477,26 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
         </SectionWrapper>
       </div>
 
-      {/* Bottom Save Button - Fixed on mobile */}
-      <div className="sticky bottom-20 sm:bottom-4 pt-4 pb-2">
+      {/* Bottom Save Button - Fixed on mobile, sleek design */}
+      <div className="sticky bottom-20 sm:bottom-4 pt-3 pb-2">
         <button
           onClick={handleSave}
           disabled={isSaving}
           className={cn(
-            "w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl font-semibold text-base transition-all active:scale-[0.98] shadow-lg",
+            "w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] shadow-md",
             isSaving
               ? "bg-slate-200 text-slate-500 cursor-not-allowed"
-              : "bg-slate-900 text-white hover:bg-slate-800"
+              : "bg-gradient-to-r from-sky-500 to-blue-500 text-white hover:from-sky-600 hover:to-blue-600"
           )}
         >
           {isSaving ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
               <span>Saving...</span>
             </>
           ) : (
             <>
-              <Check className="w-5 h-5" />
+              <Check className="w-4 h-4" />
               <span>Save All Changes</span>
             </>
           )}

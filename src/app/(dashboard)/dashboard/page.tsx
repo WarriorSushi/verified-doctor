@@ -34,7 +34,8 @@ export default async function DashboardPage() {
     redirect("/onboarding");
   }
 
-  // Get unread message count
+  // Get unread count - this is fast since it's a cached connection
+  // Layout already fetches this too but caching makes it instant
   const supabase = await createClient();
   const { count: unreadCount } = await supabase
     .from("messages")
