@@ -1,29 +1,22 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getAuth } from "@/lib/auth";
+import { getProfile } from "@/lib/profile-cache";
 import { MessageList } from "@/components/dashboard/message-list";
 
 export default async function MessagesPage() {
-  const { userId } = await getAuth();
+  // Use cached profile - deduplicated with layout
+  const { profile, userId } = await getProfile();
 
   if (!userId) {
     redirect("/sign-in");
   }
-
-  const supabase = await createClient();
-
-  // Get profile
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("user_id", userId)
-    .single();
 
   if (!profile) {
     redirect("/onboarding");
   }
 
   // Get messages
+  const supabase = await createClient();
   const { data: messages } = await supabase
     .from("messages")
     .select("*")

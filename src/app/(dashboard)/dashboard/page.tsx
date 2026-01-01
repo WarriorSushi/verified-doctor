@@ -14,7 +14,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { getAuth } from "@/lib/auth";
+import { getProfile } from "@/lib/profile-cache";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/dashboard/copy-button";
 import { formatViewCount } from "@/lib/format-metrics";
@@ -23,24 +23,19 @@ import { InviteDialog } from "@/components/dashboard/invite-dialog";
 import { InvitePromptCard } from "@/components/dashboard/invite-prompt-card";
 
 export default async function DashboardPage() {
-  const { userId } = await getAuth();
+  // Use cached profile - deduplicated with layout
+  const { profile, userId } = await getProfile();
 
   if (!userId) {
     redirect("/sign-in");
   }
-
-  const supabase = await createClient();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("user_id", userId)
-    .single();
 
   if (!profile) {
     redirect("/onboarding");
   }
 
   // Get unread message count
+  const supabase = await createClient();
   const { count: unreadCount } = await supabase
     .from("messages")
     .select("*", { count: "exact", head: true })
