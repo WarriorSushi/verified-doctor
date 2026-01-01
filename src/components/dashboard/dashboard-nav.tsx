@@ -28,9 +28,11 @@ export function DashboardNav({ unreadCount, pendingConnectionsCount = 0 }: Dashb
   };
 
   return (
-    <nav className="border-t border-slate-100 bg-white overflow-x-auto">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="flex gap-0.5 sm:gap-1 min-w-max">
+    <nav className="border-t border-slate-100 bg-white">
+      <div className="max-w-6xl mx-auto px-2 sm:px-6">
+        {/* Mobile: Icon + tiny label stacked, evenly distributed */}
+        {/* Desktop: Horizontal with icon + label inline */}
+        <div className="flex justify-around sm:justify-start sm:gap-1">
           {navItems.map((item) => {
             const isActive =
               item.href === "/dashboard"
@@ -44,16 +46,27 @@ export function DashboardNav({ unreadCount, pendingConnectionsCount = 0 }: Dashb
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-3 sm:py-3 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap",
+                  // Mobile: flex-col with icon on top, label below
+                  // Desktop: flex-row inline
+                  "relative flex flex-col sm:flex-row items-center gap-0.5 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 font-medium border-b-2 -mb-px transition-colors",
                   isActive
                     ? "border-[#0099F7] text-[#0099F7]"
-                    : "border-transparent text-slate-600 hover:text-slate-900"
+                    : "border-transparent text-slate-500 hover:text-slate-900"
                 )}
               >
-                <Icon className="w-4 h-4 sm:w-4 sm:h-4" />
-                <span>{item.label}</span>
+                <div className="relative">
+                  <Icon className="w-5 h-5 sm:w-4 sm:h-4" />
+                  {/* Badge on mobile - positioned on icon */}
+                  {badgeCount > 0 && (
+                    <span className="sm:hidden absolute -top-1.5 -right-1.5 px-1 py-0.5 text-[9px] font-bold bg-red-500 text-white rounded-full min-w-[14px] text-center leading-none">
+                      {badgeCount > 9 ? "9+" : badgeCount}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[10px] sm:text-sm whitespace-nowrap">{item.label}</span>
+                {/* Badge on desktop - inline */}
                 {badgeCount > 0 && (
-                  <span className="ml-0.5 sm:ml-1 px-1.5 py-0.5 text-[10px] sm:text-xs font-bold bg-red-500 text-white rounded-full min-w-[18px] text-center">
+                  <span className="hidden sm:inline-flex ml-1 px-1.5 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full min-w-[18px] text-center">
                     {badgeCount}
                   </span>
                 )}
