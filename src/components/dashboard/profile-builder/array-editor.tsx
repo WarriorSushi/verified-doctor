@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { Plus, Trash2, GripVertical } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 interface FieldConfig {
   name: string;
@@ -64,51 +64,46 @@ export function ArrayEditor<T extends Record<string, string>>({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {items.length === 0 ? (
-        <div className="text-center py-8 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+        <div className="text-center py-10 bg-slate-50 rounded-xl border border-dashed border-slate-200">
           <p className="text-sm text-slate-500">{emptyMessage}</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {items.map((item, index) => (
             <div
               key={index}
-              className="bg-slate-50 rounded-lg p-4 border border-slate-200"
+              className="bg-slate-50 rounded-xl p-4 sm:p-5 border border-slate-200"
             >
-              <div className="flex items-start justify-between gap-2 mb-3">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    className="p-1 hover:bg-slate-200 rounded cursor-grab"
+                    className="p-2 hover:bg-slate-200 rounded-lg cursor-grab active:cursor-grabbing transition-colors"
                     onMouseDown={(e) => e.preventDefault()}
                   >
                     <GripVertical className="w-4 h-4 text-slate-400" />
                   </button>
-                  <span className="text-xs font-medium text-slate-500">
+                  <span className="text-sm font-medium text-slate-600">
                     #{index + 1}
                   </span>
                 </div>
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 px-2"
                   onClick={() => removeItem(index)}
+                  className="p-2.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
-                </Button>
+                </button>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-4">
                 {fields.map((field) => (
-                  <div
-                    key={field.name}
-                    className={field.type === "textarea" ? "sm:col-span-2" : ""}
-                  >
-                    <Label className="text-xs text-slate-600 mb-1 block">
+                  <div key={field.name}>
+                    <Label className="text-sm text-slate-600 mb-2 block">
                       {field.label}
-                      {field.required && <span className="text-red-500">*</span>}
+                      {field.required && <span className="text-red-500 ml-0.5">*</span>}
                     </Label>
                     {field.type === "textarea" ? (
                       <Textarea
@@ -117,7 +112,7 @@ export function ArrayEditor<T extends Record<string, string>>({
                           updateItem(index, field.name, e.target.value)
                         }
                         placeholder={field.placeholder}
-                        className="text-sm min-h-[80px]"
+                        className="text-base min-h-[100px] rounded-xl border-slate-200 focus:border-emerald-300 focus:ring-emerald-100"
                       />
                     ) : (
                       <Input
@@ -127,7 +122,7 @@ export function ArrayEditor<T extends Record<string, string>>({
                           updateItem(index, field.name, e.target.value)
                         }
                         placeholder={field.placeholder}
-                        className="text-sm"
+                        className="h-12 text-base rounded-xl border-slate-200 focus:border-emerald-300 focus:ring-emerald-100"
                         min={field.type === "year" ? 1950 : undefined}
                         max={field.type === "year" ? new Date().getFullYear() + 5 : undefined}
                       />
@@ -141,20 +136,24 @@ export function ArrayEditor<T extends Record<string, string>>({
       )}
 
       {items.length < maxItems && (
-        <Button
+        <button
           type="button"
-          variant="outline"
-          className="w-full border-dashed"
           onClick={addItem}
+          className={cn(
+            "w-full flex items-center justify-center gap-2 py-4 rounded-xl",
+            "border-2 border-dashed border-slate-200 hover:border-slate-300",
+            "text-slate-600 hover:text-slate-700 font-medium text-sm",
+            "transition-all active:scale-[0.99]"
+          )}
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4" />
           {addLabel}
-        </Button>
+        </button>
       )}
 
       {items.length >= maxItems && (
-        <p className="text-xs text-slate-500 text-center">
-          Maximum of {maxItems} items allowed
+        <p className="text-xs text-slate-400 text-center">
+          Maximum of {maxItems} items
         </p>
       )}
     </div>

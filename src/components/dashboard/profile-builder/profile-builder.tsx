@@ -17,10 +17,9 @@ import {
   Users,
   Newspaper,
   Image as ImageIcon,
-  Save,
+  Check,
   Loader2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -32,6 +31,7 @@ import { ArrayEditor } from "./array-editor";
 import { TagInput } from "./tag-input";
 import { VideoEmbedPreview } from "./video-embed-preview";
 import { ImageGalleryEditor } from "./image-gallery-editor";
+import { cn } from "@/lib/utils";
 
 interface ProfileBuilderProps {
   profile: Profile;
@@ -154,36 +154,19 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Profile Builder</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Enrich your public profile with additional content
-          </p>
-        </div>
-        <Button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="bg-gradient-to-r from-[#0099F7] to-[#0080CC] hover:from-[#0088E0] hover:to-[#0070B8]"
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4 mr-2" />
-              Save Changes
-            </>
-          )}
-        </Button>
+    <div className="space-y-5 sm:space-y-6">
+      {/* Header - Mobile optimized */}
+      <div className="space-y-1">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
+          Profile Builder
+        </h1>
+        <p className="text-sm text-slate-500">
+          Add content to enrich your public profile. Toggle visibility for each section.
+        </p>
       </div>
 
-      {/* Sections */}
-      <div className="space-y-4">
+      {/* Sections - Better spacing */}
+      <div className="space-y-4 sm:space-y-5">
         {/* Video Introduction */}
         <SectionWrapper
           title="Video Introduction"
@@ -253,7 +236,7 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
           <TagInput
             value={formData.conditionsTreated}
             onChange={(v) => updateField("conditionsTreated", v)}
-            placeholder="e.g., Hypertension, Diabetes, Heart Disease"
+            placeholder="e.g., Hypertension"
             maxTags={30}
           />
         </SectionWrapper>
@@ -269,7 +252,7 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
           <TagInput
             value={formData.proceduresPerformed}
             onChange={(v) => updateField("proceduresPerformed", v)}
-            placeholder="e.g., Angioplasty, Bypass Surgery, ECG"
+            placeholder="e.g., Angioplasty"
             maxTags={30}
           />
         </SectionWrapper>
@@ -282,16 +265,16 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
           isVisible={isSectionVisible("approach")}
           onVisibilityChange={(v) => toggleVisibility("approach", v)}
         >
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Textarea
               value={formData.approachToCare}
               onChange={(e) => updateField("approachToCare", e.target.value)}
               placeholder="Describe your approach to patient care, your values, and what patients can expect when visiting you..."
-              className="min-h-[120px]"
+              className="min-h-[140px] text-base rounded-xl border-slate-200 focus:border-emerald-300 focus:ring-emerald-100"
               maxLength={2000}
             />
-            <p className="text-xs text-slate-500 text-right">
-              {formData.approachToCare.length}/2000 characters
+            <p className="text-xs text-slate-400 text-right">
+              {formData.approachToCare.length}/2000
             </p>
           </div>
         </SectionWrapper>
@@ -327,16 +310,16 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
           isVisible={isSectionVisible("firstVisit")}
           onVisibilityChange={(v) => toggleVisibility("firstVisit", v)}
         >
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Textarea
               value={formData.firstVisitGuide}
               onChange={(e) => updateField("firstVisitGuide", e.target.value)}
               placeholder="What should patients bring? What to expect? Any preparation needed?..."
-              className="min-h-[120px]"
+              className="min-h-[140px] text-base rounded-xl border-slate-200 focus:border-emerald-300 focus:ring-emerald-100"
               maxLength={2000}
             />
-            <p className="text-xs text-slate-500 text-right">
-              {formData.firstVisitGuide.length}/2000 characters
+            <p className="text-xs text-slate-400 text-right">
+              {formData.firstVisitGuide.length}/2000
             </p>
           </div>
         </SectionWrapper>
@@ -350,30 +333,34 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
           onVisibilityChange={(v) => toggleVisibility("availability", v)}
         >
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
               <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${formData.isAvailable ? "bg-green-500" : "bg-red-500"}`} />
+                <div className={cn(
+                  "w-3.5 h-3.5 rounded-full",
+                  formData.isAvailable ? "bg-emerald-500" : "bg-red-400"
+                )} />
                 <div>
                   <Label className="text-sm font-medium">
                     {formData.isAvailable ? "Accepting New Patients" : "Not Accepting New Patients"}
                   </Label>
                   <p className="text-xs text-slate-500">
-                    This will be shown on your public profile
+                    Shown on your public profile
                   </p>
                 </div>
               </div>
               <Switch
                 checked={formData.isAvailable}
                 onCheckedChange={(v) => updateField("isAvailable", v)}
-                className="data-[state=checked]:bg-green-500"
+                className="data-[state=checked]:bg-emerald-500"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-sm text-slate-700">Availability Note (Optional)</Label>
+              <Label className="text-sm text-slate-600">Availability Note (Optional)</Label>
               <Input
                 value={formData.availabilityNote}
                 onChange={(e) => updateField("availabilityNote", e.target.value)}
                 placeholder="e.g., Available Mondays and Thursdays only"
+                className="h-12 text-base rounded-xl"
                 maxLength={500}
               />
             </div>
@@ -388,9 +375,12 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
           isVisible={isSectionVisible("telemedicine")}
           onVisibilityChange={(v) => toggleVisibility("telemedicine", v)}
         >
-          <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
             <div className="flex items-center gap-3">
-              <MonitorSmartphone className={`w-5 h-5 ${formData.offersTelemedicine ? "text-[#0099F7]" : "text-slate-400"}`} />
+              <MonitorSmartphone className={cn(
+                "w-5 h-5",
+                formData.offersTelemedicine ? "text-emerald-600" : "text-slate-400"
+              )} />
               <div>
                 <Label className="text-sm font-medium">
                   {formData.offersTelemedicine ? "Telemedicine Available" : "Telemedicine Not Available"}
@@ -403,7 +393,7 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
             <Switch
               checked={formData.offersTelemedicine}
               onCheckedChange={(v) => updateField("offersTelemedicine", v)}
-              className="data-[state=checked]:bg-[#0099F7]"
+              className="data-[state=checked]:bg-emerald-500"
             />
           </div>
         </SectionWrapper>
@@ -417,9 +407,9 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
           onVisibilityChange={(v) => toggleVisibility("badges", v)}
           badge="ADMIN"
         >
-          <div className="text-center py-8 bg-slate-50 rounded-lg border border-dashed border-slate-200">
-            <Award className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-            <p className="text-sm text-slate-500">Badges are awarded by the platform</p>
+          <div className="text-center py-10 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <Award className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <p className="text-sm text-slate-500 font-medium">Badges are awarded by the platform</p>
             <p className="text-xs text-slate-400 mt-1">
               Keep building your profile to earn badges
             </p>
@@ -487,26 +477,30 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
         </SectionWrapper>
       </div>
 
-      {/* Bottom Save Button (Mobile) */}
-      <div className="sticky bottom-20 sm:bottom-4 pt-4 pb-2 bg-gradient-to-t from-slate-50 to-transparent">
-        <Button
+      {/* Bottom Save Button - Fixed on mobile */}
+      <div className="sticky bottom-20 sm:bottom-4 pt-4 pb-2">
+        <button
           onClick={handleSave}
           disabled={isSaving}
-          className="w-full bg-gradient-to-r from-[#0099F7] to-[#0080CC] hover:from-[#0088E0] hover:to-[#0070B8] shadow-lg"
-          size="lg"
+          className={cn(
+            "w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl font-semibold text-base transition-all active:scale-[0.98] shadow-lg",
+            isSaving
+              ? "bg-slate-200 text-slate-500 cursor-not-allowed"
+              : "bg-slate-900 text-white hover:bg-slate-800"
+          )}
         >
           {isSaving ? (
             <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Saving...
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>Saving...</span>
             </>
           ) : (
             <>
-              <Save className="w-4 h-4 mr-2" />
-              Save All Changes
+              <Check className="w-5 h-5" />
+              <span>Save All Changes</span>
             </>
           )}
-        </Button>
+        </button>
       </div>
     </div>
   );

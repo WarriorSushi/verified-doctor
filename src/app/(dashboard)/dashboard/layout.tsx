@@ -78,13 +78,13 @@ export default async function DashboardLayout({
         </div>
       </header>
 
-      {/* Action Bar - Sticky below header */}
-      <div className="sticky top-[57px] sm:top-[105px] z-40 bg-gradient-to-r from-[#0099F7] to-[#0080CC] shadow-md">
+      {/* Action Bar - Soft warm tone */}
+      <div className="sticky top-[57px] sm:top-[105px] z-40 bg-gradient-to-r from-slate-800 to-slate-700 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-center gap-2 sm:gap-4 py-2.5 sm:py-3">
+          <div className="flex items-center justify-center gap-3 sm:gap-4 py-3 sm:py-3.5">
             <Link
               href="/dashboard/profile-builder"
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-4 sm:px-6 py-2.5 rounded-lg font-medium text-sm transition-all border border-white/30"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2.5 bg-white/10 hover:bg-white/20 text-white px-5 sm:px-6 py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.98] border border-white/10"
             >
               <Pencil className="w-4 h-4" />
               <span>Edit Public Page</span>
@@ -92,7 +92,7 @@ export default async function DashboardLayout({
             <Link
               href={`/${profile.handle}`}
               target="_blank"
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-[#0080CC] px-4 sm:px-6 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-sm"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2.5 bg-white hover:bg-slate-50 text-slate-800 px-5 sm:px-6 py-3 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] shadow-sm"
             >
               <ExternalLink className="w-4 h-4" />
               <span>View Public Page</span>
@@ -107,7 +107,7 @@ export default async function DashboardLayout({
       </Suspense>
 
       {/* Main Content - Extra padding on mobile for bottom nav */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-8 pb-24 sm:pb-8">{children}</main>
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-8 pb-28 sm:pb-8">{children}</main>
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav
