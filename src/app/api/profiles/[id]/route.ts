@@ -26,7 +26,7 @@ const caseStudyItemSchema = z.object({
 
 // Schema for gallery image items
 const galleryImageSchema = z.object({
-  url: z.string().url(),
+  url: z.string(),
   caption: z.string().optional(),
 });
 
@@ -40,7 +40,7 @@ const membershipItemSchema = z.object({
 const mediaItemSchema = z.object({
   title: z.string(),
   publication: z.string(),
-  link: z.string().url().optional(),
+  link: z.string().optional(),
   year: z.string().optional(),
 });
 
@@ -65,7 +65,7 @@ const updateProfileSchema = z.object({
   registrationNumber: z.string().max(100).nullable().optional(),
 
   // New profile builder fields
-  videoIntroductionUrl: z.string().url().nullable().optional(),
+  videoIntroductionUrl: z.string().refine((val) => val === "" || val === null || z.string().url().safeParse(val).success, { message: "Invalid URL" }).nullable().optional(),
   approachToCare: z.string().max(2000).nullable().optional(),
   firstVisitGuide: z.string().max(2000).nullable().optional(),
   availabilityNote: z.string().max(500).nullable().optional(),

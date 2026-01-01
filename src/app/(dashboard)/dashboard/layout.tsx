@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Suspense } from "react";
-import { Pencil } from "lucide-react";
+import { Pencil, ExternalLink } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/profile-cache";
 import { DashboardNav } from "@/components/dashboard/dashboard-nav";
@@ -63,55 +63,10 @@ export default async function DashboardLayout({
             </span>
           </Link>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Desktop: View Profile + Edit Profile buttons */}
-            <Link
-              href={`/${profile.handle}`}
-              target="_blank"
-              className="hidden sm:inline-flex items-center gap-2 bg-gradient-to-r from-[#0099F7] to-[#0080CC] hover:from-[#0088E0] hover:to-[#0070B8] text-white px-4 py-2 rounded-lg font-medium text-sm transition-all shadow-sm hover:shadow-md"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              View Profile
-            </Link>
-            <Link
-              href="/dashboard/profile-builder"
-              className="hidden sm:inline-flex items-center gap-2 border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg font-medium text-sm transition-all"
-            >
-              <Pencil className="w-4 h-4" />
-              Edit Profile
-            </Link>
-
-            {/* Mobile: Two compact pill buttons */}
-            <Link
-              href={`/${profile.handle}`}
-              target="_blank"
-              className="sm:hidden group relative flex items-center gap-1 bg-gradient-to-r from-[#0099F7] to-[#0080CC] text-white pl-2 pr-2.5 py-1.5 rounded-full font-medium text-[10px] shadow-md shadow-[#0099F7]/25 active:scale-[0.98] transition-all"
-            >
-              <span className="absolute inset-0 rounded-full bg-gradient-to-b from-white/20 to-transparent opacity-60" />
-              <span className="relative flex items-center gap-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span className="tracking-wide">View</span>
-              </span>
-            </Link>
-            <Link
-              href="/dashboard/profile-builder"
-              className="sm:hidden flex items-center gap-1 bg-white border border-slate-200 text-slate-600 pl-2 pr-2.5 py-1.5 rounded-full font-medium text-[10px] active:scale-[0.98] transition-all"
-            >
-              <Pencil className="w-3 h-3" />
-              <span className="tracking-wide">Edit</span>
-            </Link>
-
-            <UserMenu
-              fullName={profile.full_name}
-              handle={profile.handle}
-            />
-          </div>
+          <UserMenu
+            fullName={profile.full_name}
+            handle={profile.handle}
+          />
         </div>
 
         {/* Navigation - Desktop only */}
@@ -122,6 +77,29 @@ export default async function DashboardLayout({
           />
         </div>
       </header>
+
+      {/* Action Bar - Sticky below header */}
+      <div className="sticky top-[57px] sm:top-[105px] z-40 bg-gradient-to-r from-[#0099F7] to-[#0080CC] shadow-md">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-center gap-2 sm:gap-4 py-2.5 sm:py-3">
+            <Link
+              href="/dashboard/profile-builder"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-4 sm:px-6 py-2.5 rounded-lg font-medium text-sm transition-all border border-white/30"
+            >
+              <Pencil className="w-4 h-4" />
+              <span>Edit Public Page</span>
+            </Link>
+            <Link
+              href={`/${profile.handle}`}
+              target="_blank"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-[#0080CC] px-4 sm:px-6 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-sm"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span>View Public Page</span>
+            </Link>
+          </div>
+        </div>
+      </div>
 
       {/* Invite Processor - handles invite codes from URL */}
       <Suspense fallback={null}>

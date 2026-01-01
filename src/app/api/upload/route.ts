@@ -35,6 +35,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Determine bucket based on type
+    const bucket = type === "gallery" ? "clinic-gallery" : "profile-photos";
+
     // Generate unique filename
     const timestamp = Date.now();
     const ext = file.type.split("/")[1];
@@ -48,7 +51,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
 
     const { data, error } = await supabase.storage
-      .from("profile-photos")
+      .from(bucket)
       .upload(filename, buffer, {
         contentType: file.type,
         upsert: false,
@@ -65,7 +68,7 @@ export async function POST(request: NextRequest) {
     // Get the public URL
     const {
       data: { publicUrl },
-    } = supabase.storage.from("profile-photos").getPublicUrl(data.path);
+    } = supabase.storage.from(bucket).getPublicUrl(data.path);
 
     return NextResponse.json({ url: publicUrl });
   } catch (error) {

@@ -106,8 +106,9 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
     mediaPublications: (profile.media_publications as unknown as MediaItem[]) || [],
   });
 
+  // Sections are OFF by default unless explicitly set to true
   const isSectionVisible = (key: string) => {
-    return visibility[key] !== false;
+    return visibility[key] === true;
   };
 
   const toggleVisibility = (key: string, visible: boolean) => {
