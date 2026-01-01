@@ -171,6 +171,16 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
                 )}
               </div>
 
+              {/* Verified Capsule */}
+              {profile.is_verified && (
+                <div className="flex justify-center sm:justify-start mb-2">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 border border-emerald-200 rounded-full text-[10px] sm:text-xs font-medium text-emerald-700">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Verified Physician
+                  </span>
+                </div>
+              )}
+
               {/* Specialty */}
               <p className="text-[#0099F7] font-medium text-sm sm:text-base mb-2">{profile.specialty}</p>
 
@@ -203,7 +213,7 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
                     <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#0099F7]/10 rounded-full">
                       <ThumbsUp className="w-3.5 h-3.5 text-[#0099F7]" />
                       <span className="text-xs font-semibold text-[#0099F7]">
-                        {profile.recommendation_count} {profile.recommendation_count === 1 ? "rec" : "recs"}
+                        {profile.recommendation_count} {profile.recommendation_count === 1 ? "recommendation" : "recommendations"}
                       </span>
                     </div>
                   )}
@@ -393,7 +403,7 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
           />
           <div className="relative z-10">
             <p className="text-slate-700 text-base sm:text-lg font-medium mb-4">
-              Had a great experience with {firstName}?
+              Show your appreciation for {profile.full_name} by clicking below
             </p>
             <RecommendButton profileId={profile.id} />
           </div>

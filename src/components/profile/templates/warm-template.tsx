@@ -221,6 +221,17 @@ export function WarmTemplate({ profile, connectedDoctors, invitedBy }: WarmTempl
                 )}
               </div>
 
+              {/* Verified Capsule */}
+              {profile.is_verified && (
+                <div className="flex justify-center sm:justify-start mb-2">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium"
+                    style={{ backgroundColor: `${theme.primary}15`, border: `1px solid ${theme.primary}30`, color: theme.primary }}>
+                    <CheckCircle2 className="w-3 h-3" />
+                    Verified Physician
+                  </span>
+                </div>
+              )}
+
               {/* Specialty */}
               <p className="font-medium text-sm sm:text-base mb-2" style={{ color: theme.primary }}>
                 {profile.specialty}
@@ -258,7 +269,7 @@ export function WarmTemplate({ profile, connectedDoctors, invitedBy }: WarmTempl
                     >
                       <ThumbsUp className="w-3.5 h-3.5" style={{ color: theme.primary }} />
                       <span className="text-xs font-semibold" style={{ color: theme.primary }}>
-                        {profile.recommendation_count} {profile.recommendation_count === 1 ? "rec" : "recs"}
+                        {profile.recommendation_count} {profile.recommendation_count === 1 ? "recommendation" : "recommendations"}
                       </span>
                     </div>
                   )}
@@ -490,7 +501,7 @@ export function WarmTemplate({ profile, connectedDoctors, invitedBy }: WarmTempl
           />
           <div className="relative z-10">
             <p className="text-base sm:text-lg font-medium mb-4" style={{ color: theme.text }}>
-              Had a great experience with {firstName}?
+              Show your appreciation for {profile.full_name} by clicking below
             </p>
             <RecommendButton profileId={profile.id} />
           </div>
