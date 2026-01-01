@@ -168,59 +168,134 @@ export type Database = {
       }
       profiles: {
         Row: {
+          achievement_badges: Json | null
+          approach_to_care: string | null
+          availability_note: string | null
+          bio: string | null
+          case_studies: Json | null
+          clinic_gallery: Json | null
           clinic_location: string | null
           clinic_name: string | null
+          conditions_treated: string | null
           connection_count: number | null
+          consultation_fee: string | null
           created_at: string | null
+          education_timeline: Json | null
           external_booking_url: string | null
+          first_visit_guide: string | null
+          frozen_at: string | null
           full_name: string
           handle: string
+          hospital_affiliations: Json | null
           id: string
+          is_available: boolean | null
+          is_frozen: boolean | null
           is_verified: boolean | null
+          languages: string | null
+          media_publications: Json | null
+          offers_telemedicine: boolean | null
+          procedures_performed: string | null
+          professional_memberships: Json | null
           profile_photo_url: string | null
+          profile_template: string | null
+          qualifications: string | null
           recommendation_count: number | null
+          registration_number: string | null
+          section_visibility: Json | null
+          services: string | null
           specialty: string | null
           updated_at: string | null
           user_id: string
           verification_status: string | null
+          video_introduction_url: string | null
           view_count: number | null
           years_experience: number | null
         }
         Insert: {
+          achievement_badges?: Json | null
+          approach_to_care?: string | null
+          availability_note?: string | null
+          bio?: string | null
+          case_studies?: Json | null
+          clinic_gallery?: Json | null
           clinic_location?: string | null
           clinic_name?: string | null
+          conditions_treated?: string | null
           connection_count?: number | null
+          consultation_fee?: string | null
           created_at?: string | null
+          education_timeline?: Json | null
           external_booking_url?: string | null
+          first_visit_guide?: string | null
+          frozen_at?: string | null
           full_name: string
           handle: string
+          hospital_affiliations?: Json | null
           id?: string
+          is_available?: boolean | null
+          is_frozen?: boolean | null
           is_verified?: boolean | null
+          languages?: string | null
+          media_publications?: Json | null
+          offers_telemedicine?: boolean | null
+          procedures_performed?: string | null
+          professional_memberships?: Json | null
           profile_photo_url?: string | null
+          profile_template?: string | null
+          qualifications?: string | null
           recommendation_count?: number | null
+          registration_number?: string | null
+          section_visibility?: Json | null
+          services?: string | null
           specialty?: string | null
           updated_at?: string | null
           user_id: string
           verification_status?: string | null
+          video_introduction_url?: string | null
           view_count?: number | null
           years_experience?: number | null
         }
         Update: {
+          achievement_badges?: Json | null
+          approach_to_care?: string | null
+          availability_note?: string | null
+          bio?: string | null
+          case_studies?: Json | null
+          clinic_gallery?: Json | null
           clinic_location?: string | null
           clinic_name?: string | null
+          conditions_treated?: string | null
           connection_count?: number | null
+          consultation_fee?: string | null
           created_at?: string | null
+          education_timeline?: Json | null
           external_booking_url?: string | null
+          first_visit_guide?: string | null
+          frozen_at?: string | null
           full_name?: string
           handle?: string
+          hospital_affiliations?: Json | null
           id?: string
+          is_available?: boolean | null
+          is_frozen?: boolean | null
           is_verified?: boolean | null
+          languages?: string | null
+          media_publications?: Json | null
+          offers_telemedicine?: boolean | null
+          procedures_performed?: string | null
+          professional_memberships?: Json | null
           profile_photo_url?: string | null
+          profile_template?: string | null
+          qualifications?: string | null
           recommendation_count?: number | null
+          registration_number?: string | null
+          section_visibility?: Json | null
+          services?: string | null
           specialty?: string | null
           updated_at?: string | null
           user_id?: string
           verification_status?: string | null
+          video_introduction_url?: string | null
           view_count?: number | null
           years_experience?: number | null
         }

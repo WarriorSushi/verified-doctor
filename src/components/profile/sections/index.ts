@@ -1,0 +1,12 @@
+export { VideoIntroduction } from "./video-introduction";
+export { EducationTimeline } from "./education-timeline";
+export { HospitalAffiliations } from "./hospital-affiliations";
+export { ConditionsProcedures } from "./conditions-procedures";
+export { ApproachToCare } from "./approach-to-care";
+export { CaseStudies } from "./case-studies";
+export { FirstVisitGuide } from "./first-visit-guide";
+export { AvailabilityBadge } from "./availability-badge";
+export { TelemedicineBadge } from "./telemedicine-badge";
+export { ProfessionalMemberships } from "./professional-memberships";
+export { MediaPublications } from "./media-publications";
+export { ClinicGallery } from "./clinic-gallery";

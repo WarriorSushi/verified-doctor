@@ -3,7 +3,52 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getAuth } from "@/lib/auth";
 
+// Schema for education timeline items
+const educationItemSchema = z.object({
+  institution: z.string(),
+  degree: z.string(),
+  year: z.string(),
+});
+
+// Schema for hospital affiliation items
+const hospitalItemSchema = z.object({
+  name: z.string(),
+  role: z.string(),
+  department: z.string().optional(),
+});
+
+// Schema for case study items
+const caseStudyItemSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  outcome: z.string().optional(),
+});
+
+// Schema for gallery image items
+const galleryImageSchema = z.object({
+  url: z.string().url(),
+  caption: z.string().optional(),
+});
+
+// Schema for professional membership items
+const membershipItemSchema = z.object({
+  organization: z.string(),
+  year: z.string().optional(),
+});
+
+// Schema for media/publication items
+const mediaItemSchema = z.object({
+  title: z.string(),
+  publication: z.string(),
+  link: z.string().url().optional(),
+  year: z.string().optional(),
+});
+
+// Schema for section visibility
+const sectionVisibilitySchema = z.record(z.string(), z.boolean()).optional();
+
 const updateProfileSchema = z.object({
+  // Basic fields
   fullName: z.string().min(2).max(100).optional(),
   specialty: z.string().optional(),
   clinicName: z.string().nullable().optional(),
@@ -12,6 +57,35 @@ const updateProfileSchema = z.object({
   profilePhotoUrl: z.string().url().nullable().optional(),
   externalBookingUrl: z.string().url().nullable().optional(),
   profileTemplate: z.enum(["classic", "ocean", "sage", "warm"]).optional(),
+  bio: z.string().max(2000).nullable().optional(),
+  qualifications: z.string().max(1000).nullable().optional(),
+  languages: z.string().max(500).nullable().optional(),
+  consultationFee: z.string().max(100).nullable().optional(),
+  services: z.string().max(1000).nullable().optional(),
+  registrationNumber: z.string().max(100).nullable().optional(),
+
+  // New profile builder fields
+  videoIntroductionUrl: z.string().url().nullable().optional(),
+  approachToCare: z.string().max(2000).nullable().optional(),
+  firstVisitGuide: z.string().max(2000).nullable().optional(),
+  availabilityNote: z.string().max(500).nullable().optional(),
+  conditionsTreated: z.string().max(2000).nullable().optional(),
+  proceduresPerformed: z.string().max(2000).nullable().optional(),
+
+  // Boolean fields
+  isAvailable: z.boolean().optional(),
+  offersTelemedicine: z.boolean().optional(),
+
+  // JSONB array fields
+  educationTimeline: z.array(educationItemSchema).optional(),
+  hospitalAffiliations: z.array(hospitalItemSchema).optional(),
+  caseStudies: z.array(caseStudyItemSchema).optional(),
+  clinicGallery: z.array(galleryImageSchema).optional(),
+  professionalMemberships: z.array(membershipItemSchema).optional(),
+  mediaPublications: z.array(mediaItemSchema).optional(),
+
+  // Section visibility
+  sectionVisibility: sectionVisibilitySchema,
 });
 
 interface RouteParams {
@@ -53,34 +127,48 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Build update object
+    // Build update object with field mapping
+    const fieldMapping: Record<string, string> = {
+      fullName: "full_name",
+      specialty: "specialty",
+      clinicName: "clinic_name",
+      clinicLocation: "clinic_location",
+      yearsExperience: "years_experience",
+      profilePhotoUrl: "profile_photo_url",
+      externalBookingUrl: "external_booking_url",
+      profileTemplate: "profile_template",
+      bio: "bio",
+      qualifications: "qualifications",
+      languages: "languages",
+      consultationFee: "consultation_fee",
+      services: "services",
+      registrationNumber: "registration_number",
+      videoIntroductionUrl: "video_introduction_url",
+      approachToCare: "approach_to_care",
+      firstVisitGuide: "first_visit_guide",
+      availabilityNote: "availability_note",
+      conditionsTreated: "conditions_treated",
+      proceduresPerformed: "procedures_performed",
+      isAvailable: "is_available",
+      offersTelemedicine: "offers_telemedicine",
+      educationTimeline: "education_timeline",
+      hospitalAffiliations: "hospital_affiliations",
+      caseStudies: "case_studies",
+      clinicGallery: "clinic_gallery",
+      professionalMemberships: "professional_memberships",
+      mediaPublications: "media_publications",
+      sectionVisibility: "section_visibility",
+    };
+
     const updates: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     };
 
-    if (result.data.fullName !== undefined) {
-      updates.full_name = result.data.fullName;
-    }
-    if (result.data.specialty !== undefined) {
-      updates.specialty = result.data.specialty;
-    }
-    if (result.data.clinicName !== undefined) {
-      updates.clinic_name = result.data.clinicName;
-    }
-    if (result.data.clinicLocation !== undefined) {
-      updates.clinic_location = result.data.clinicLocation;
-    }
-    if (result.data.yearsExperience !== undefined) {
-      updates.years_experience = result.data.yearsExperience;
-    }
-    if (result.data.profilePhotoUrl !== undefined) {
-      updates.profile_photo_url = result.data.profilePhotoUrl;
-    }
-    if (result.data.externalBookingUrl !== undefined) {
-      updates.external_booking_url = result.data.externalBookingUrl;
-    }
-    if (result.data.profileTemplate !== undefined) {
-      updates.profile_template = result.data.profileTemplate;
+    // Map all provided fields to database columns
+    for (const [key, dbColumn] of Object.entries(fieldMapping)) {
+      if (result.data[key as keyof typeof result.data] !== undefined) {
+        updates[dbColumn] = result.data[key as keyof typeof result.data];
+      }
     }
 
     const { error: updateError } = await supabase

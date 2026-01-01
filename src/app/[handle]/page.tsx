@@ -32,6 +32,22 @@ interface ExtendedProfile {
   connection_count: number;
   profile_template: string | null;
   is_frozen: boolean | null;
+  // Profile builder fields
+  video_introduction_url: string | null;
+  approach_to_care: string | null;
+  first_visit_guide: string | null;
+  availability_note: string | null;
+  conditions_treated: string | null;
+  procedures_performed: string | null;
+  is_available: boolean | null;
+  offers_telemedicine: boolean | null;
+  education_timeline: unknown;
+  hospital_affiliations: unknown;
+  case_studies: unknown;
+  clinic_gallery: unknown;
+  professional_memberships: unknown;
+  media_publications: unknown;
+  section_visibility: unknown;
 }
 
 interface ProfilePageProps {

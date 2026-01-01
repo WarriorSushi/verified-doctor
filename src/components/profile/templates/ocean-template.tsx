@@ -25,6 +25,20 @@ import { ProfileActions } from "../profile-actions";
 import { RecommendButton } from "../recommend-button";
 import { ProfileViewTracker } from "../profile-view-tracker";
 import { formatRecommendationCount, formatConnectionCount } from "@/lib/format-metrics";
+import {
+  VideoIntroduction,
+  EducationTimeline,
+  HospitalAffiliations,
+  ConditionsProcedures,
+  ApproachToCare,
+  CaseStudies,
+  FirstVisitGuide,
+  AvailabilityBadge,
+  TelemedicineBadge,
+  ProfessionalMemberships,
+  MediaPublications,
+  ClinicGallery,
+} from "../sections";
 
 interface Profile {
   id: string;
@@ -45,6 +59,22 @@ interface Profile {
   is_verified: boolean;
   recommendation_count: number;
   connection_count: number;
+  // New profile builder fields
+  video_introduction_url: string | null;
+  approach_to_care: string | null;
+  first_visit_guide: string | null;
+  availability_note: string | null;
+  conditions_treated: string | null;
+  procedures_performed: string | null;
+  is_available: boolean | null;
+  offers_telemedicine: boolean | null;
+  education_timeline: unknown;
+  hospital_affiliations: unknown;
+  case_studies: unknown;
+  clinic_gallery: unknown;
+  professional_memberships: unknown;
+  media_publications: unknown;
+  section_visibility: unknown;
 }
 
 interface ConnectedDoctor {
@@ -68,6 +98,13 @@ interface OceanTemplateProps {
   invitedBy?: InvitedBy | null;
 }
 
+// Helper to check section visibility
+function isSectionVisible(visibility: unknown, key: string): boolean {
+  if (!visibility || typeof visibility !== "object") return true;
+  const v = visibility as Record<string, boolean>;
+  return v[key] !== false;
+}
+
 // Ocean theme colors
 const theme = {
   primary: "#0077B6",
@@ -83,12 +120,19 @@ const theme = {
   border: "#D4E8F2",
 };
 
+// Theme colors for section components
+const themeColors = {
+  primary: "#0077B6",
+  accent: "#90E0EF",
+};
+
 export function OceanTemplate({ profile, connectedDoctors, invitedBy }: OceanTemplateProps) {
   const [showFullBio, setShowFullBio] = useState(false);
   const recommendationText = formatRecommendationCount(profile.recommendation_count || 0);
   const connectionText = formatConnectionCount(profile.connection_count || 0);
   const services = profile.services?.split(",").map((s) => s.trim()).filter(Boolean) || [];
   const firstName = profile.full_name.split(" ")[0];
+  const visibility = profile.section_visibility;
 
   // Truncate bio to ~150 chars
   const bioTruncated = profile.bio && profile.bio.length > 150
@@ -462,11 +506,180 @@ export function OceanTemplate({ profile, connectedDoctors, invitedBy }: OceanTem
           </div>
         </motion.div>
 
+        {/* NEW PROFILE SECTIONS */}
+        <div className="space-y-4 mb-6">
+          {/* Video Introduction */}
+          {isSectionVisible(visibility, "video") && profile.video_introduction_url && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.3 }}
+            >
+              <VideoIntroduction
+                url={profile.video_introduction_url}
+                doctorName={firstName}
+                themeColors={themeColors}
+              />
+            </motion.div>
+          )}
+
+          {/* Availability & Telemedicine */}
+          {(isSectionVisible(visibility, "availability") || isSectionVisible(visibility, "telemedicine")) && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.32 }}
+              className="space-y-3"
+            >
+              {isSectionVisible(visibility, "availability") && profile.is_available !== null && (
+                <AvailabilityBadge
+                  isAvailable={profile.is_available}
+                  availabilityNote={profile.availability_note || undefined}
+                  themeColors={themeColors}
+                />
+              )}
+              {isSectionVisible(visibility, "telemedicine") && profile.offers_telemedicine && (
+                <TelemedicineBadge
+                  offersTelemedicine={profile.offers_telemedicine}
+                  themeColors={themeColors}
+                />
+              )}
+            </motion.div>
+          )}
+
+          {/* Education Timeline */}
+          {isSectionVisible(visibility, "education") && Array.isArray(profile.education_timeline) && profile.education_timeline.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.34 }}
+            >
+              <EducationTimeline
+                items={profile.education_timeline as Array<{institution: string; degree: string; year: string}>}
+                themeColors={themeColors}
+              />
+            </motion.div>
+          )}
+
+          {/* Hospital Affiliations */}
+          {isSectionVisible(visibility, "hospitals") && Array.isArray(profile.hospital_affiliations) && profile.hospital_affiliations.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.36 }}
+            >
+              <HospitalAffiliations
+                items={profile.hospital_affiliations as Array<{name: string; role: string; department?: string}>}
+                themeColors={themeColors}
+              />
+            </motion.div>
+          )}
+
+          {/* Conditions & Procedures */}
+          {(isSectionVisible(visibility, "conditions") || isSectionVisible(visibility, "procedures")) && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.38 }}
+            >
+              <ConditionsProcedures
+                conditions={isSectionVisible(visibility, "conditions") ? profile.conditions_treated || undefined : undefined}
+                procedures={isSectionVisible(visibility, "procedures") ? profile.procedures_performed || undefined : undefined}
+                themeColors={themeColors}
+              />
+            </motion.div>
+          )}
+
+          {/* Approach to Care */}
+          {isSectionVisible(visibility, "approach") && profile.approach_to_care && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.4 }}
+            >
+              <ApproachToCare
+                content={profile.approach_to_care}
+                themeColors={themeColors}
+              />
+            </motion.div>
+          )}
+
+          {/* Case Studies */}
+          {isSectionVisible(visibility, "cases") && Array.isArray(profile.case_studies) && profile.case_studies.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.42 }}
+            >
+              <CaseStudies
+                items={profile.case_studies as Array<{title: string; description: string; outcome?: string}>}
+                themeColors={themeColors}
+              />
+            </motion.div>
+          )}
+
+          {/* First Visit Guide */}
+          {isSectionVisible(visibility, "firstVisit") && profile.first_visit_guide && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.44 }}
+            >
+              <FirstVisitGuide
+                content={profile.first_visit_guide}
+                themeColors={themeColors}
+              />
+            </motion.div>
+          )}
+
+          {/* Professional Memberships */}
+          {isSectionVisible(visibility, "memberships") && Array.isArray(profile.professional_memberships) && profile.professional_memberships.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.46 }}
+            >
+              <ProfessionalMemberships
+                items={profile.professional_memberships as Array<{organization: string; year?: string}>}
+                themeColors={themeColors}
+              />
+            </motion.div>
+          )}
+
+          {/* Media & Publications */}
+          {isSectionVisible(visibility, "media") && Array.isArray(profile.media_publications) && profile.media_publications.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.48 }}
+            >
+              <MediaPublications
+                items={profile.media_publications as Array<{title: string; publication: string; link?: string; year?: string}>}
+                themeColors={themeColors}
+              />
+            </motion.div>
+          )}
+
+          {/* Clinic Gallery */}
+          {isSectionVisible(visibility, "gallery") && Array.isArray(profile.clinic_gallery) && profile.clinic_gallery.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.5 }}
+            >
+              <ClinicGallery
+                images={profile.clinic_gallery as Array<{url: string; caption?: string}>}
+                themeColors={themeColors}
+              />
+            </motion.div>
+          )}
+        </div>
+
         {/* Recommendation Section - Prominent placement */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
+          transition={{ duration: 0.4, delay: 0.52 }}
           className="rounded-2xl p-5 sm:p-6 text-center mb-6 relative overflow-hidden"
           style={{
             background: `linear-gradient(135deg, ${theme.accentLight}, ${theme.accent}60)`,
