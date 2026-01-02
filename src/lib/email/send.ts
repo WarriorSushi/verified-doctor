@@ -241,6 +241,122 @@ The verified badge helps patients trust your credentials and distinguishes you a
 }
 
 /**
+ * Send an invite email to a colleague
+ */
+export async function sendInviteEmail(
+  to: string,
+  inviterName: string,
+  inviterHandle: string,
+  inviteUrl: string
+): Promise<SendEmailResult> {
+  const inviterProfileUrl = `https://verified.doctor/${inviterHandle}`;
+
+  const subject = `${inviterName} invited you to join Verified.Doctor`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b; margin: 0; padding: 0; background: #f8fafc; }
+    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+    .card { background: white; border-radius: 12px; padding: 40px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .header { text-align: center; margin-bottom: 30px; }
+    .logo { width: 48px; height: 48px; }
+    h1 { color: #0f172a; font-size: 24px; margin: 0 0 16px 0; }
+    p { color: #475569; line-height: 1.6; margin: 0 0 16px 0; }
+    .inviter-card { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1px solid #bae6fd; border-radius: 12px; padding: 20px; margin: 24px 0; text-align: center; }
+    .inviter-name { font-size: 18px; font-weight: 600; color: #0369a1; margin-bottom: 4px; }
+    .inviter-handle { font-size: 14px; color: #0284c7; }
+    .button { display: inline-block; background: linear-gradient(135deg, #0099F7 0%, #0080CC 100%); color: white !important; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; }
+    .footer { text-align: center; margin-top: 30px; color: #94a3b8; font-size: 14px; }
+    .benefits { background: #f8fafc; border-radius: 8px; padding: 20px; margin: 24px 0; }
+    .benefit { display: flex; align-items: flex-start; margin-bottom: 12px; }
+    .benefit:last-child { margin-bottom: 0; }
+    .benefit-icon { color: #0099F7; margin-right: 12px; font-weight: bold; }
+    .benefit-text { color: #475569; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="header">
+        <img src="https://verified.doctor/verified-doctor-logo.svg" alt="Verified.Doctor" class="logo" />
+      </div>
+
+      <h1>You've been invited!</h1>
+
+      <p>${inviterName} has invited you to join Verified.Doctor, the professional network for verified medical professionals.</p>
+
+      <div class="inviter-card">
+        <div class="inviter-name">${inviterName}</div>
+        <div class="inviter-handle">verified.doctor/${inviterHandle}</div>
+      </div>
+
+      <div class="benefits">
+        <p style="font-weight: 600; margin-bottom: 16px; color: #0f172a;">Why join Verified.Doctor?</p>
+        <div class="benefit">
+          <span class="benefit-icon">✓</span>
+          <span class="benefit-text">Get your own verified profile URL</span>
+        </div>
+        <div class="benefit">
+          <span class="benefit-icon">✓</span>
+          <span class="benefit-text">Build your professional network with peers</span>
+        </div>
+        <div class="benefit">
+          <span class="benefit-icon">✓</span>
+          <span class="benefit-text">Receive patient recommendations (no negative reviews)</span>
+        </div>
+        <div class="benefit">
+          <span class="benefit-icon">✓</span>
+          <span class="benefit-text">Automatically connect with ${inviterName}</span>
+        </div>
+      </div>
+
+      <center>
+        <a href="${inviteUrl}" class="button">Accept Invitation</a>
+      </center>
+
+      <p style="margin-top: 24px; font-size: 14px; color: #64748b;">
+        By accepting this invitation, you'll automatically be connected with ${inviterName} on Verified.Doctor.
+      </p>
+    </div>
+
+    <div class="footer">
+      <p>Verified.Doctor - Your Digital Identity, Verified.</p>
+      <p style="font-size: 12px; margin-top: 8px;">
+        <a href="${inviterProfileUrl}" style="color: #0099F7;">View ${inviterName}'s profile</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  const text = `
+${inviterName} has invited you to join Verified.Doctor!
+
+Verified.Doctor is the professional network for verified medical professionals.
+
+Why join?
+- Get your own verified profile URL
+- Build your professional network with peers
+- Receive patient recommendations (no negative reviews)
+- Automatically connect with ${inviterName}
+
+Accept the invitation: ${inviteUrl}
+
+By accepting, you'll automatically be connected with ${inviterName}.
+
+- The Verified.Doctor Team
+  `.trim();
+
+  return sendEmail({ to, subject, html, text });
+}
+
+/**
  * Send a new message notification email
  */
 export async function sendNewMessageEmail(

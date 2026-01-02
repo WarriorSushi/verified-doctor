@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageCropper } from "@/components/ui/image-cropper";
 import { uploadProfilePhoto } from "@/lib/upload";
 import { getUser } from "@/lib/auth/client";
 
@@ -47,15 +48,15 @@ const TEMPLATES = [
 function OnboardingForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const prefilledHandle = searchParams.get("handle");
-  const inviteCode = searchParams.get("invite");
+  const urlHandle = searchParams.get("handle");
+  const urlInviteCode = searchParams.get("invite");
 
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
   // Step 1: Basic Info
-  const [handle, setHandle] = useState(prefilledHandle || "");
+  const [handle, setHandle] = useState("");
   const [fullName, setFullName] = useState("");
 
   // Step 2: Professional Details
@@ -75,6 +76,8 @@ function OnboardingForm() {
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
+  const [originalImageForCrop, setOriginalImageForCrop] = useState<string | null>(null);
   const [bio, setBio] = useState("");
   const [externalBookingUrl, setExternalBookingUrl] = useState("");
   const [profileTemplate, setProfileTemplate] = useState("classic");
@@ -82,14 +85,33 @@ function OnboardingForm() {
   // Handle availability check
   const [handleStatus, setHandleStatus] = useState<
     "idle" | "checking" | "available" | "taken"
-  >(prefilledHandle ? "available" : "idle");
+  >("idle");
 
+  // Retrieve invite code from URL or localStorage
+  const [inviteCode, setInviteCode] = useState<string | null>(urlInviteCode);
+
+  // On mount, check for handle and invite code from localStorage (set during signup)
   useEffect(() => {
+    // Priority: URL params > localStorage
+    const storedHandle = localStorage.getItem("claimed_handle");
+    const storedInviteCode = localStorage.getItem("invite_code");
+
+    // Set handle from URL or localStorage
+    const prefilledHandle = urlHandle || storedHandle;
     if (prefilledHandle) {
       setHandle(prefilledHandle);
       setHandleStatus("available");
     }
-  }, [prefilledHandle]);
+
+    // Set invite code from URL or localStorage
+    if (!urlInviteCode && storedInviteCode) {
+      setInviteCode(storedInviteCode);
+    }
+
+    // Clean up localStorage after retrieving
+    if (storedHandle) localStorage.removeItem("claimed_handle");
+    if (storedInviteCode) localStorage.removeItem("invite_code");
+  }, [urlHandle, urlInviteCode]);
 
   const checkHandle = async () => {
     if (!handle.trim() || handle.length < 3) return;
@@ -112,16 +134,27 @@ function OnboardingForm() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Read file and show cropper
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setOriginalImageForCrop(reader.result as string);
+      setShowCropper(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setShowCropper(false);
     setIsUploadingPhoto(true);
     setError("");
 
     try {
-      // Show preview immediately using data URL
+      // Show preview immediately
       const reader = new FileReader();
       reader.onloadend = () => {
         setProfilePhoto(reader.result as string);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(croppedBlob);
 
       // Get user ID for upload
       const { data: userData } = await getUser();
@@ -129,8 +162,13 @@ function OnboardingForm() {
         throw new Error("Please sign in to upload a photo");
       }
 
+      // Convert Blob to File for upload
+      const croppedFile = new File([croppedBlob], "profile-photo.jpg", {
+        type: "image/jpeg",
+      });
+
       // Upload to Supabase Storage
-      const publicUrl = await uploadProfilePhoto(file, userData.user.id);
+      const publicUrl = await uploadProfilePhoto(croppedFile, userData.user.id);
       setProfilePhotoUrl(publicUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to upload photo");
@@ -190,6 +228,21 @@ function OnboardingForm() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
+      {/* Image Cropper Modal */}
+      {originalImageForCrop && (
+        <ImageCropper
+          imageSrc={originalImageForCrop}
+          open={showCropper}
+          onClose={() => {
+            setShowCropper(false);
+            setOriginalImageForCrop(null);
+          }}
+          onCropComplete={handleCropComplete}
+          aspectRatio={1}
+          cropShape="round"
+        />
+      )}
+
       {/* Background */}
       <div
         className="absolute inset-0 opacity-[0.015]"
@@ -289,6 +342,14 @@ function OnboardingForm() {
                     {handleStatus === "taken" && (
                       <p className="text-xs sm:text-sm text-red-500">
                         This handle is already taken
+                      </p>
+                    )}
+                    {handleStatus !== "taken" && (
+                      <p className="text-xs text-slate-500 flex items-center gap-1.5">
+                        <Sparkles className="w-3 h-3 text-sky-500" />
+                        <span>
+                          Tip: Use your name (e.g., <span className="font-medium">sharma</span> or <span className="font-medium">arjun-sharma</span>) — no need to add &quot;doctor&quot; since the domain already says verified<span className="text-sky-600 font-medium">.doctor</span>
+                        </span>
                       </p>
                     )}
                   </div>

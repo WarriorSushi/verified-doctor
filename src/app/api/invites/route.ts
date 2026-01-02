@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getAuth } from "@/lib/auth";
 import { randomBytes } from "crypto";
+import { sendInviteEmail } from "@/lib/email/send";
 
 const createInviteSchema = z.object({
   email: z.string().email().optional(),
@@ -61,13 +62,31 @@ export async function POST(request: Request) {
       );
     }
 
+    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://verified.doctor"}/sign-up?invite=${inviteCode}`;
+
+    // Send invite email if email was provided
+    if (result.data.email) {
+      const emailResult = await sendInviteEmail(
+        result.data.email,
+        profile.full_name,
+        profile.handle,
+        inviteUrl
+      );
+
+      if (!emailResult.success) {
+        console.warn("Failed to send invite email:", emailResult.error);
+        // Don't fail the request, just log the error
+      }
+    }
+
     return NextResponse.json({
       invite,
-      inviteUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://verified.doctor"}/sign-up?invite=${inviteCode}`,
+      inviteUrl,
       inviter: {
         name: profile.full_name,
         handle: profile.handle,
       },
+      emailSent: !!result.data.email,
     });
   } catch (error) {
     console.error("Create invite error:", error);

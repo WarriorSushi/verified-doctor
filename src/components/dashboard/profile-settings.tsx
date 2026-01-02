@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { ImageCropper } from "@/components/ui/image-cropper";
 import { VerificationUpload } from "./verification-upload";
 import { cn } from "@/lib/utils";
 import { uploadProfilePhoto } from "@/lib/upload";
@@ -90,6 +91,8 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
     profile.profile_photo_url
   );
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
+  const [originalImageForCrop, setOriginalImageForCrop] = useState<string | null>(null);
 
   // Fetch freeze status on mount
   useEffect(() => {
@@ -135,6 +138,17 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Read file and show cropper
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setOriginalImageForCrop(reader.result as string);
+      setShowCropper(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setShowCropper(false);
     setIsUploadingPhoto(true);
 
     try {
@@ -143,7 +157,7 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
       reader.onloadend = () => {
         setProfilePhotoPreview(reader.result as string);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(croppedBlob);
 
       // Get user ID for upload
       const { data: userData } = await getUser();
@@ -151,8 +165,13 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
         throw new Error("Please sign in to upload a photo");
       }
 
+      // Convert Blob to File for upload
+      const croppedFile = new File([croppedBlob], "profile-photo.jpg", {
+        type: "image/jpeg",
+      });
+
       // Upload to Supabase Storage
-      const publicUrl = await uploadProfilePhoto(file, userData.user.id);
+      const publicUrl = await uploadProfilePhoto(croppedFile, userData.user.id);
 
       // Update profile with new photo URL
       const response = await fetch(`/api/profiles/${profile.id}`, {
@@ -238,6 +257,21 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
 
   return (
     <div className="space-y-6">
+      {/* Image Cropper Modal */}
+      {originalImageForCrop && (
+        <ImageCropper
+          imageSrc={originalImageForCrop}
+          open={showCropper}
+          onClose={() => {
+            setShowCropper(false);
+            setOriginalImageForCrop(null);
+          }}
+          onCropComplete={handleCropComplete}
+          aspectRatio={1}
+          cropShape="round"
+        />
+      )}
+
       {/* Profile Photo */}
       <div className="bg-white rounded-xl border border-slate-200 p-6">
         <div className="flex items-center gap-2 mb-4">

@@ -31,6 +31,7 @@ import { ArrayEditor } from "./array-editor";
 import { TagInput } from "./tag-input";
 import { VideoEmbedPreview } from "./video-embed-preview";
 import { ImageGalleryEditor } from "./image-gallery-editor";
+import { AIEnhanceButton } from "@/components/ui/ai-enhance-button";
 import { cn } from "@/lib/utils";
 
 interface ProfileBuilderProps {
@@ -273,9 +274,16 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
               className="min-h-[140px] text-base rounded-xl border-slate-200 focus:border-emerald-300 focus:ring-emerald-100"
               maxLength={2000}
             />
-            <p className="text-xs text-slate-400 text-right">
-              {formData.approachToCare.length}/2000
-            </p>
+            <div className="flex items-center justify-between">
+              <AIEnhanceButton
+                text={formData.approachToCare}
+                type="approach"
+                onEnhance={(text) => updateField("approachToCare", text)}
+              />
+              <p className="text-xs text-slate-400">
+                {formData.approachToCare.length}/2000
+              </p>
+            </div>
           </div>
         </SectionWrapper>
 
@@ -318,9 +326,16 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
               className="min-h-[140px] text-base rounded-xl border-slate-200 focus:border-emerald-300 focus:ring-emerald-100"
               maxLength={2000}
             />
-            <p className="text-xs text-slate-400 text-right">
-              {formData.firstVisitGuide.length}/2000
-            </p>
+            <div className="flex items-center justify-between">
+              <AIEnhanceButton
+                text={formData.firstVisitGuide}
+                type="first_visit"
+                onEnhance={(text) => updateField("firstVisitGuide", text)}
+              />
+              <p className="text-xs text-slate-400">
+                {formData.firstVisitGuide.length}/2000
+              </p>
+            </div>
           </div>
         </SectionWrapper>
 

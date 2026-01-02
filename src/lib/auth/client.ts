@@ -53,3 +53,14 @@ export function onAuthStateChange(callback: (event: string, session: unknown) =>
   const supabase = createBrowserClient();
   return supabase.auth.onAuthStateChange(callback);
 }
+
+/**
+ * Resend confirmation email (client-side).
+ */
+export async function resendConfirmationEmail(email: string) {
+  const supabase = createBrowserClient();
+  return supabase.auth.resend({
+    type: "signup",
+    email,
+  });
+}

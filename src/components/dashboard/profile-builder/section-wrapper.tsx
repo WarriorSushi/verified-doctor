@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Eye, EyeOff } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -16,6 +16,64 @@ interface SectionWrapperProps {
   badge?: string;
 }
 
+// Custom Toggle Switch Component
+function VisibilityToggle({
+  isVisible,
+  onToggle,
+}: {
+  isVisible: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      {/* Toggle Switch */}
+      <button
+        type="button"
+        role="switch"
+        aria-checked={isVisible}
+        onClick={onToggle}
+        className={cn(
+          "relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 transition-all duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2",
+          isVisible
+            ? "bg-gradient-to-r from-sky-400 to-sky-500 border-sky-400"
+            : "bg-slate-200 border-slate-300 hover:bg-slate-300 hover:border-slate-400"
+        )}
+      >
+        {/* Sliding Knob */}
+        <span
+          className={cn(
+            "pointer-events-none inline-block h-5 w-5 transform rounded-full shadow-lg ring-0 transition-all duration-300 ease-out",
+            isVisible
+              ? "translate-x-[22px] bg-white"
+              : "translate-x-0.5 bg-white"
+          )}
+        >
+          {/* Inner icon on knob */}
+          <span className="absolute inset-0 flex items-center justify-center">
+            {isVisible ? (
+              <Eye className="w-3 h-3 text-sky-500" />
+            ) : (
+              <EyeOff className="w-3 h-3 text-slate-400" />
+            )}
+          </span>
+        </span>
+      </button>
+
+      {/* Label */}
+      <div className="flex flex-col">
+        <span
+          className={cn(
+            "text-sm font-medium transition-colors duration-200",
+            isVisible ? "text-sky-700" : "text-slate-600"
+          )}
+        >
+          {isVisible ? "Visible on profile" : "Hidden from profile"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function SectionWrapper({
   title,
   description,
@@ -27,26 +85,27 @@ export function SectionWrapper({
   badge,
 }: SectionWrapperProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   return (
     <div
       className={cn(
-        "bg-white rounded-2xl border-2 transition-all duration-200",
+        "bg-white rounded-2xl border-2 transition-all duration-300",
         isVisible
           ? "border-slate-200/80 shadow-sm"
           : "border-dashed border-slate-200"
       )}
     >
-      {/* Header - Mobile optimized */}
+      {/* Header */}
       <div className="p-4 sm:p-5">
-        {/* Top row: Icon, Title, and Visibility Toggle */}
+        {/* Top row: Icon, Title, Badge */}
         <div className="flex items-start gap-3">
           {/* Icon */}
           <div
             className={cn(
-              "w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200",
+              "w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300",
               isVisible
-                ? "bg-emerald-50 text-emerald-600"
+                ? "bg-sky-50 text-sky-600"
                 : "bg-slate-100 text-slate-400"
             )}
           >
@@ -58,7 +117,7 @@ export function SectionWrapper({
             <div className="flex items-center gap-2 flex-wrap">
               <h3
                 className={cn(
-                  "font-semibold text-base sm:text-lg transition-colors",
+                  "font-semibold text-base sm:text-lg transition-colors duration-200",
                   isVisible ? "text-slate-900" : "text-slate-500"
                 )}
               >
@@ -73,7 +132,7 @@ export function SectionWrapper({
             {description && (
               <p
                 className={cn(
-                  "text-sm mt-0.5 transition-colors line-clamp-2",
+                  "text-sm mt-0.5 transition-colors duration-200 line-clamp-2",
                   isVisible ? "text-slate-500" : "text-slate-400"
                 )}
               >
@@ -83,51 +142,66 @@ export function SectionWrapper({
           </div>
         </div>
 
-        {/* Controls row - Better mobile layout */}
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
-          {/* Visibility Toggle - Large touch target */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onVisibilityChange(!isVisible);
-            }}
-            className={cn(
-              "flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 active:scale-[0.98]",
-              isVisible
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                : "bg-slate-100 text-slate-600 border border-slate-200"
-            )}
-          >
-            {isVisible ? (
-              <>
-                <Eye className="w-4 h-4" />
-                <span>Visible on profile</span>
-              </>
-            ) : (
-              <>
-                <EyeOff className="w-4 h-4" />
-                <span>Hidden from profile</span>
-              </>
-            )}
-          </button>
+        {/* Controls row */}
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
+          {/* Visibility Toggle with Info */}
+          <div className="flex items-center gap-2">
+            <VisibilityToggle
+              isVisible={isVisible}
+              onToggle={() => onVisibilityChange(!isVisible)}
+            />
 
-          {/* Expand/Collapse - Large touch target */}
+            {/* Info tooltip */}
+            <div className="relative">
+              <button
+                type="button"
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                onMouseEnter={() => setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
+                onFocus={() => setShowTooltip(true)}
+                onBlur={() => setShowTooltip(false)}
+                aria-label="More info about visibility"
+              >
+                <Info className="w-4 h-4" />
+              </button>
+
+              <AnimatePresence>
+                {showTooltip && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 z-50"
+                  >
+                    <div className="bg-slate-800 text-white text-xs rounded-lg py-2 px-3 shadow-lg max-w-[200px] whitespace-normal">
+                      <p>Toggle to show or hide this section on your public profile. Hidden sections are only visible to you.</p>
+                      <div className="absolute -top-1 left-4 sm:left-auto sm:right-4 w-2 h-2 bg-slate-800 rotate-45" />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* Expand/Collapse Button */}
           <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
             className={cn(
               "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 active:scale-[0.98]",
-              "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              isOpen
+                ? "bg-sky-50 text-sky-700 border border-sky-200"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-transparent"
             )}
           >
             <span>{isOpen ? "Collapse" : "Edit"}</span>
-            <ChevronDown
-              className={cn(
-                "w-4 h-4 transition-transform duration-200",
-                isOpen && "rotate-180"
-              )}
-            />
+            <motion.div
+              animate={{ rotate: isOpen ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ChevronDown className="w-4 h-4" />
+            </motion.div>
           </button>
         </div>
       </div>
@@ -139,15 +213,28 @@ export function SectionWrapper({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
+            transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
             className="overflow-hidden"
           >
             <div
               className={cn(
-                "px-4 sm:px-5 pb-5 pt-4 border-t border-slate-100",
-                !isVisible && "opacity-60"
+                "px-4 sm:px-5 pb-5 pt-4 border-t border-slate-100 transition-opacity duration-300",
+                !isVisible && "opacity-50"
               )}
             >
+              {/* Hidden indicator banner when section is hidden */}
+              {!isVisible && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-4 flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg"
+                >
+                  <EyeOff className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <p className="text-xs text-amber-700">
+                    This section is hidden from your public profile. Toggle above to make it visible.
+                  </p>
+                </motion.div>
+              )}
               {children}
             </div>
           </motion.div>
