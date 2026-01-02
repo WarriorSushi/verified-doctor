@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
@@ -9,6 +10,9 @@ import {
   WarmTemplate,
 } from "@/components/profile/templates";
 import { PauseCircle } from "lucide-react";
+
+// Route segment config for caching - revalidate every 60 seconds
+export const revalidate = 60;
 
 // Extended profile type including new fields from migration
 interface ExtendedProfile {
@@ -54,11 +58,9 @@ interface ProfilePageProps {
   params: Promise<{ handle: string }>;
 }
 
-export default async function ProfilePage({ params }: ProfilePageProps) {
-  const { handle } = await params;
+// Cached profile fetch - deduplicates between page and metadata
+const getProfileByHandle = cache(async (handle: string) => {
   const supabase = await createClient();
-
-  // Fetch profile
   const { data: profile, error } = await supabase
     .from("profiles")
     .select("*")
@@ -66,11 +68,22 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     .single();
 
   if (error || !profile) {
-    notFound();
+    return null;
   }
 
-  // Cast to extended profile type (includes new migration fields)
-  const extendedProfile = profile as unknown as ExtendedProfile;
+  return profile as unknown as ExtendedProfile;
+});
+
+export default async function ProfilePage({ params }: ProfilePageProps) {
+  const { handle } = await params;
+  const supabase = await createClient();
+
+  // Fetch profile (cached)
+  const extendedProfile = await getProfileByHandle(handle);
+
+  if (!extendedProfile) {
+    notFound();
+  }
 
   // If profile is frozen, show unavailable page
   if (extendedProfile.is_frozen) {
@@ -188,13 +201,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
 export async function generateMetadata({ params }: ProfilePageProps) {
   const { handle } = await params;
-  const supabase = await createClient();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("handle", handle.toLowerCase())
-    .single();
+  // Use cached profile fetch - deduplicates with page component
+  const profile = await getProfileByHandle(handle);
 
   if (!profile) {
     return {
@@ -202,18 +211,15 @@ export async function generateMetadata({ params }: ProfilePageProps) {
     };
   }
 
-  // Cast to access new fields from migration
-  const extProfile = profile as unknown as ExtendedProfile;
-
-  const description = extProfile.bio
-    ? extProfile.bio.slice(0, 160)
-    : `${extProfile.specialty}${extProfile.clinic_location ? ` at ${extProfile.clinic_location}` : ""}`;
+  const description = profile.bio
+    ? profile.bio.slice(0, 160)
+    : `${profile.specialty}${profile.clinic_location ? ` at ${profile.clinic_location}` : ""}`;
 
   return {
-    title: `${extProfile.full_name} | Verified.Doctor`,
+    title: `${profile.full_name} | Verified.Doctor`,
     description,
     openGraph: {
-      title: `${extProfile.full_name} | Verified.Doctor`,
+      title: `${profile.full_name} | Verified.Doctor`,
       description,
       type: "profile",
     },

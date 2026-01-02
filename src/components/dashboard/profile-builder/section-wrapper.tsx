@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Eye, EyeOff, Info } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, Info, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -14,6 +14,7 @@ interface SectionWrapperProps {
   children: React.ReactNode;
   defaultOpen?: boolean;
   badge?: string;
+  hasAI?: boolean;
 }
 
 // Custom Toggle Switch Component
@@ -83,6 +84,7 @@ export function SectionWrapper({
   children,
   defaultOpen = false,
   badge,
+  hasAI = false,
 }: SectionWrapperProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [showTooltip, setShowTooltip] = useState(false);
@@ -123,6 +125,12 @@ export function SectionWrapper({
               >
                 {title}
               </h3>
+              {hasAI && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold bg-gradient-to-r from-violet-100 to-purple-100 text-violet-700 rounded-md">
+                  <Sparkles className="w-3 h-3" />
+                  AI
+                </span>
+              )}
               {badge && (
                 <span className="px-2 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-md uppercase tracking-wide">
                   {badge}

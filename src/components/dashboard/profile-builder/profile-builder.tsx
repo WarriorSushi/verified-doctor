@@ -167,8 +167,8 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
         </p>
       </div>
 
-      {/* Sections - Better spacing */}
-      <div className="space-y-4 sm:space-y-5">
+      {/* Sections - Better spacing on mobile */}
+      <div className="space-y-5 sm:space-y-6">
         {/* Video Introduction */}
         <SectionWrapper
           title="Video Introduction"
@@ -234,6 +234,7 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
           icon={<Stethoscope className="w-5 h-5" />}
           isVisible={isSectionVisible("conditions")}
           onVisibilityChange={(v) => toggleVisibility("conditions", v)}
+          hasAI
         >
           <div className="space-y-4">
             <TagInput
@@ -264,6 +265,7 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
           icon={<Scissors className="w-5 h-5" />}
           isVisible={isSectionVisible("procedures")}
           onVisibilityChange={(v) => toggleVisibility("procedures", v)}
+          hasAI
         >
           <div className="space-y-4">
             <TagInput
@@ -294,6 +296,7 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
           icon={<Heart className="w-5 h-5" />}
           isVisible={isSectionVisible("approach")}
           onVisibilityChange={(v) => toggleVisibility("approach", v)}
+          hasAI
         >
           <div className="space-y-3">
             <Textarea
@@ -346,6 +349,7 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
           icon={<CalendarCheck className="w-5 h-5" />}
           isVisible={isSectionVisible("firstVisit")}
           onVisibilityChange={(v) => toggleVisibility("firstVisit", v)}
+          hasAI
         >
           <div className="space-y-3">
             <Textarea

@@ -97,11 +97,11 @@ interface ClassicTemplateProps {
   invitedBy?: InvitedBy | null;
 }
 
-// Helper to check section visibility
+// Helper to check section visibility - sections are OFF by default unless explicitly set to true
 function isSectionVisible(visibility: unknown, key: string): boolean {
-  if (!visibility || typeof visibility !== "object") return true;
+  if (!visibility || typeof visibility !== "object") return false;
   const v = visibility as Record<string, boolean>;
-  return v[key] !== false;
+  return v[key] === true;
 }
 
 // Theme colors for classic template
@@ -181,6 +181,8 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
                     src={profile.profile_photo_url}
                     alt={profile.full_name}
                     fill
+                    priority
+                    sizes="(max-width: 640px) 96px, 128px"
                     className="object-cover rounded-full border-3 border-white shadow-lg relative z-10"
                   />
                 ) : (
@@ -427,7 +429,7 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
         </motion.div>
 
         {/* NEW PROFILE SECTIONS */}
-        <div className="space-y-4 mb-6">
+        <div className="space-y-5 sm:space-y-4 mb-6">
           {/* Video Introduction */}
           {isSectionVisible(visibility, "video") && profile.video_introduction_url && (
             <motion.div

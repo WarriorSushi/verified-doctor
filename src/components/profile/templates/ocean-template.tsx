@@ -98,11 +98,11 @@ interface OceanTemplateProps {
   invitedBy?: InvitedBy | null;
 }
 
-// Helper to check section visibility
+// Helper to check section visibility - sections are OFF by default unless explicitly set to true
 function isSectionVisible(visibility: unknown, key: string): boolean {
-  if (!visibility || typeof visibility !== "object") return true;
+  if (!visibility || typeof visibility !== "object") return false;
   const v = visibility as Record<string, boolean>;
-  return v[key] !== false;
+  return v[key] === true;
 }
 
 // Ocean theme colors
@@ -507,7 +507,7 @@ export function OceanTemplate({ profile, connectedDoctors, invitedBy }: OceanTem
         </motion.div>
 
         {/* NEW PROFILE SECTIONS */}
-        <div className="space-y-4 mb-6">
+        <div className="space-y-5 sm:space-y-4 mb-6">
           {/* Video Introduction */}
           {isSectionVisible(visibility, "video") && profile.video_introduction_url && (
             <motion.div

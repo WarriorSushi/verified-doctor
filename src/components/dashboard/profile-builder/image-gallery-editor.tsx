@@ -2,8 +2,9 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
-import { Plus, Trash2, GripVertical, Loader2, ImageIcon } from "lucide-react";
+import { Plus, Trash2, GripVertical, Loader2, ImageIcon, CheckCircle2, Sparkles, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
 import imageCompression from "browser-image-compression";
 
 interface GalleryImage {
@@ -18,6 +19,16 @@ interface ImageGalleryEditorProps {
   profileId: string;
 }
 
+type UploadStage = "idle" | "compressing" | "uploading" | "success" | "error";
+
+interface UploadProgress {
+  stage: UploadStage;
+  currentFile: number;
+  totalFiles: number;
+  fileName: string;
+  compressionProgress?: number;
+}
+
 export function ImageGalleryEditor({
   images,
   onChange,
@@ -26,6 +37,7 @@ export function ImageGalleryEditor({
 }: ImageGalleryEditorProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,12 +58,33 @@ export function ImageGalleryEditor({
     try {
       const uploadedImages: GalleryImage[] = [];
 
-      for (const file of filesToUpload) {
+      for (let i = 0; i < filesToUpload.length; i++) {
+        const file = filesToUpload[i];
+
+        // Stage 1: Compressing
+        setUploadProgress({
+          stage: "compressing",
+          currentFile: i + 1,
+          totalFiles: filesToUpload.length,
+          fileName: file.name,
+        });
+
         // Compress image
         const compressedFile = await imageCompression(file, {
           maxSizeMB: 0.5,
           maxWidthOrHeight: 1200,
           useWebWorker: true,
+          onProgress: (progress) => {
+            setUploadProgress(prev => prev ? { ...prev, compressionProgress: progress } : null);
+          },
+        });
+
+        // Stage 2: Uploading
+        setUploadProgress({
+          stage: "uploading",
+          currentFile: i + 1,
+          totalFiles: filesToUpload.length,
+          fileName: file.name,
         });
 
         // Upload to API
@@ -73,10 +106,31 @@ export function ImageGalleryEditor({
         uploadedImages.push({ url: data.url });
       }
 
+      // Stage 3: Success
+      setUploadProgress({
+        stage: "success",
+        currentFile: filesToUpload.length,
+        totalFiles: filesToUpload.length,
+        fileName: "",
+      });
+
+      // Brief delay to show success state
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       onChange([...images, ...uploadedImages]);
+      setUploadProgress(null);
     } catch (error) {
       console.error("Upload error:", error);
+      setUploadProgress({
+        stage: "error",
+        currentFile: 0,
+        totalFiles: 0,
+        fileName: "",
+      });
       setUploadError("Failed to upload image. Please try again.");
+
+      // Clear error state after delay
+      setTimeout(() => setUploadProgress(null), 2000);
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -96,7 +150,128 @@ export function ImageGalleryEditor({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
+      {/* Upload Progress Overlay */}
+      <AnimatePresence>
+        {uploadProgress && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4"
+            >
+              {/* Icon */}
+              <div className="flex justify-center">
+                {uploadProgress.stage === "compressing" && (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    className="w-16 h-16 rounded-full bg-gradient-to-r from-sky-100 to-blue-100 flex items-center justify-center"
+                  >
+                    <Sparkles className="w-8 h-8 text-sky-500" />
+                  </motion.div>
+                )}
+                {uploadProgress.stage === "uploading" && (
+                  <motion.div
+                    animate={{ y: [0, -8, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                    className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 flex items-center justify-center"
+                  >
+                    <Upload className="w-8 h-8 text-blue-500" />
+                  </motion.div>
+                )}
+                {uploadProgress.stage === "success" && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                    className="w-16 h-16 rounded-full bg-gradient-to-r from-emerald-100 to-green-100 flex items-center justify-center"
+                  >
+                    <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                  </motion.div>
+                )}
+                {uploadProgress.stage === "error" && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="w-16 h-16 rounded-full bg-gradient-to-r from-red-100 to-rose-100 flex items-center justify-center"
+                  >
+                    <X className="w-8 h-8 text-red-500" />
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Status Text */}
+              <div className="text-center space-y-1">
+                <h3 className="font-semibold text-slate-900">
+                  {uploadProgress.stage === "compressing" && "Optimizing Image..."}
+                  {uploadProgress.stage === "uploading" && "Uploading..."}
+                  {uploadProgress.stage === "success" && "Upload Complete!"}
+                  {uploadProgress.stage === "error" && "Upload Failed"}
+                </h3>
+                <p className="text-sm text-slate-500">
+                  {uploadProgress.stage === "compressing" && (
+                    <>Compressing for faster loading</>
+                  )}
+                  {uploadProgress.stage === "uploading" && (
+                    <>Saving to your gallery</>
+                  )}
+                  {uploadProgress.stage === "success" && (
+                    <>Your image has been added</>
+                  )}
+                  {uploadProgress.stage === "error" && (
+                    <>Please try again</>
+                  )}
+                </p>
+              </div>
+
+              {/* Progress Bar */}
+              {(uploadProgress.stage === "compressing" || uploadProgress.stage === "uploading") && (
+                <div className="space-y-2">
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <motion.div
+                      className={`h-full rounded-full ${
+                        uploadProgress.stage === "compressing"
+                          ? "bg-gradient-to-r from-sky-400 to-blue-500"
+                          : "bg-gradient-to-r from-blue-400 to-indigo-500"
+                      }`}
+                      initial={{ width: "0%" }}
+                      animate={{
+                        width: uploadProgress.stage === "compressing"
+                          ? `${uploadProgress.compressionProgress || 0}%`
+                          : "100%"
+                      }}
+                      transition={{
+                        duration: uploadProgress.stage === "uploading" ? 2 : 0.3,
+                        ease: uploadProgress.stage === "uploading" ? "linear" : "easeOut"
+                      }}
+                    />
+                  </div>
+                  {uploadProgress.totalFiles > 1 && (
+                    <p className="text-xs text-slate-400 text-center">
+                      Image {uploadProgress.currentFile} of {uploadProgress.totalFiles}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* File Name */}
+              {uploadProgress.fileName && (
+                <p className="text-xs text-slate-400 text-center truncate px-4">
+                  {uploadProgress.fileName}
+                </p>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Image Grid */}
       {images.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -112,8 +287,8 @@ export function ImageGalleryEditor({
                 className="object-cover"
               />
 
-              {/* Overlay with actions */}
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+              {/* Overlay with actions - always visible on mobile */}
+              <div className="absolute inset-0 bg-black/50 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                 <button
                   type="button"
                   className="p-2 bg-white/90 rounded-lg hover:bg-white transition-colors cursor-grab"
@@ -171,7 +346,7 @@ export function ImageGalleryEditor({
             {isUploading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Uploading...
+                Processing...
               </>
             ) : (
               <>
@@ -184,7 +359,7 @@ export function ImageGalleryEditor({
       )}
 
       {/* Error Message */}
-      {uploadError && (
+      {uploadError && !uploadProgress && (
         <p className="text-sm text-red-500 text-center">{uploadError}</p>
       )}
 
