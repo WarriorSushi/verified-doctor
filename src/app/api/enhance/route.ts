@@ -7,6 +7,13 @@ const enhanceSchema = z.object({
   type: z.enum(["bio", "approach", "first_visit", "conditions", "procedures"]),
 });
 
+// Models to try in order (primary + fallbacks)
+const AI_MODELS = [
+  "xiaomi/mimo-v2-flash:free",
+  "tngtech/deepseek-r1t-chimera:free",
+  "deepseek/deepseek-r1-0528:free",
+];
+
 // System prompts for different content types
 const SYSTEM_PROMPTS: Record<string, string> = {
   bio: `You are an expert medical copywriter helping doctors write professional bios.
@@ -70,52 +77,70 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Call OpenRouter API with free model
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "https://verified.doctor",
-        "X-Title": "Verified.Doctor",
-      },
-      body: JSON.stringify({
-        model: "xiaomi/mimo-v2-flash:free", // Free model
-        messages: [
-          {
-            role: "system",
-            content: SYSTEM_PROMPTS[type],
-          },
-          {
-            role: "user",
-            content: `Please enhance the following text:\n\n${text}`,
-          },
-        ],
-        max_tokens: 500,
-        temperature: 0.7,
-      }),
-    });
+    // Try each model in order until one succeeds
+    let lastError: string | null = null;
 
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error("OpenRouter API error:", errorData);
-      return NextResponse.json(
-        { error: "Failed to enhance text. Please try again." },
-        { status: 500 }
-      );
+    for (const model of AI_MODELS) {
+      try {
+        console.log(`Trying model: ${model}`);
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "https://verified.doctor",
+            "X-Title": "Verified.Doctor",
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              {
+                role: "system",
+                content: SYSTEM_PROMPTS[type],
+              },
+              {
+                role: "user",
+                content: `Please enhance the following text:\n\n${text}`,
+              },
+            ],
+            max_tokens: 500,
+            temperature: 0.7,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.text();
+          console.error(`Model ${model} failed:`, errorData);
+          lastError = errorData;
+          continue; // Try next model
+        }
+
+        const data = await response.json();
+        const enhancedText = data.choices?.[0]?.message?.content?.trim();
+
+        if (!enhancedText) {
+          console.error(`Model ${model} returned empty response`);
+          lastError = "Empty response from model";
+          continue; // Try next model
+        }
+
+        console.log(`Success with model: ${model}`);
+        return NextResponse.json({ enhancedText });
+
+      } catch (modelError) {
+        console.error(`Model ${model} threw error:`, modelError);
+        lastError = modelError instanceof Error ? modelError.message : "Unknown error";
+        continue; // Try next model
+      }
     }
 
-    const data = await response.json();
-    const enhancedText = data.choices?.[0]?.message?.content?.trim();
-
-    if (!enhancedText) {
-      return NextResponse.json(
-        { error: "No enhancement generated. Please try again." },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ enhancedText });
+    // All models failed
+    console.error("All AI models failed. Last error:", lastError);
+    return NextResponse.json(
+      { error: "AI enhancement temporarily unavailable. Please try again later." },
+      { status: 503 }
+    );
   } catch (error) {
     console.error("Enhance error:", error);
     return NextResponse.json(
