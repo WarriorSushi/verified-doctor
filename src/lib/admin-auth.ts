@@ -70,3 +70,11 @@ export async function clearAdminSession(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete("admin_session");
 }
+
+// Check if a user ID is an admin (for API routes that need user-based admin check)
+export function isAdmin(userId: string): boolean {
+  // For now, admin is determined by the admin session, not by user ID
+  // This is a placeholder - in production, you might want to check against a list of admin user IDs
+  const adminUserIds = process.env.ADMIN_USER_IDS?.split(",") || [];
+  return adminUserIds.includes(userId);
+}

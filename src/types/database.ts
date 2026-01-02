@@ -51,6 +51,7 @@ export type Database = {
       invites: {
         Row: {
           created_at: string | null
+          expires_at: string | null
           id: string
           invite_code: string
           invitee_email: string | null
@@ -60,6 +61,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          expires_at?: string | null
           id?: string
           invite_code: string
           invitee_email?: string | null
@@ -69,6 +71,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          expires_at?: string | null
           id?: string
           invite_code?: string
           invitee_email?: string | null
@@ -326,6 +329,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "recommendations_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_messages: {
+        Row: {
+          id: string
+          profile_id: string
+          subject: string
+          message: string
+          status: string | null
+          admin_response: string | null
+          responded_at: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          subject: string
+          message: string
+          status?: string | null
+          admin_response?: string | null
+          responded_at?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          subject?: string
+          message?: string
+          status?: string | null
+          admin_response?: string | null
+          responded_at?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"

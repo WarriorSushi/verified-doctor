@@ -10,9 +10,12 @@ import {
   WarmTemplate,
 } from "@/components/profile/templates";
 import { PauseCircle } from "lucide-react";
+import type { Metadata } from "next";
 
 // Route segment config for caching - revalidate every 60 seconds
 export const revalidate = 60;
+
+const baseUrl = "https://verified.doctor";
 
 // Extended profile type including new fields from migration
 interface ExtendedProfile {
@@ -73,6 +76,163 @@ const getProfileByHandle = cache(async (handle: string) => {
 
   return profile as unknown as ExtendedProfile;
 });
+
+// Generate JSON-LD structured data for a doctor profile
+function generateDoctorJsonLd(profile: ExtendedProfile) {
+  const profileUrl = `${baseUrl}/${profile.handle}`;
+
+  // Parse education timeline for credentials
+  const educationTimeline = Array.isArray(profile.education_timeline)
+    ? profile.education_timeline
+    : [];
+
+  // Parse hospital affiliations
+  const hospitalAffiliations = Array.isArray(profile.hospital_affiliations)
+    ? profile.hospital_affiliations
+    : [];
+
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Physician",
+    "@id": profileUrl,
+    name: profile.full_name,
+    url: profileUrl,
+    description: profile.bio || `${profile.specialty || "Medical Professional"} ${profile.clinic_location ? `practicing in ${profile.clinic_location}` : ""}`,
+  };
+
+  // Add profile image
+  if (profile.profile_photo_url) {
+    jsonLd.image = {
+      "@type": "ImageObject",
+      url: profile.profile_photo_url,
+    };
+  }
+
+  // Add medical specialty
+  if (profile.specialty) {
+    jsonLd.medicalSpecialty = profile.specialty;
+    jsonLd.jobTitle = profile.specialty;
+  }
+
+  // Add qualifications/credentials
+  if (profile.qualifications) {
+    jsonLd.hasCredential = {
+      "@type": "EducationalOccupationalCredential",
+      credentialCategory: "Medical Qualification",
+      name: profile.qualifications,
+    };
+  }
+
+  // Add registration number
+  if (profile.registration_number) {
+    jsonLd.identifier = {
+      "@type": "PropertyValue",
+      name: "Medical Registration Number",
+      value: profile.registration_number,
+    };
+  }
+
+  // Add workplace/clinic
+  if (profile.clinic_name || profile.clinic_location) {
+    jsonLd.workLocation = {
+      "@type": "MedicalClinic",
+      name: profile.clinic_name || "Medical Practice",
+      address: profile.clinic_location ? {
+        "@type": "PostalAddress",
+        addressLocality: profile.clinic_location,
+      } : undefined,
+    };
+  }
+
+  // Add hospital affiliations
+  if (hospitalAffiliations.length > 0) {
+    jsonLd.hospitalAffiliation = hospitalAffiliations.map((h: { name?: string; role?: string }) => ({
+      "@type": "Hospital",
+      name: h.name || "Hospital",
+    }));
+  }
+
+  // Add languages spoken
+  if (profile.languages) {
+    jsonLd.knowsLanguage = profile.languages.split(",").map((lang: string) => lang.trim());
+  }
+
+  // Add services offered
+  if (profile.services) {
+    jsonLd.availableService = profile.services.split(",").map((service: string) => ({
+      "@type": "MedicalProcedure",
+      name: service.trim(),
+    }));
+  }
+
+  // Add conditions treated
+  if (profile.conditions_treated) {
+    jsonLd.expertiseLevel = profile.conditions_treated;
+  }
+
+  // Add telemedicine availability
+  if (profile.offers_telemedicine) {
+    jsonLd.isAcceptingNewPatients = profile.is_available !== false;
+    jsonLd.availableService = [
+      ...(jsonLd.availableService as Array<unknown> || []),
+      {
+        "@type": "MedicalProcedure",
+        name: "Telemedicine Consultation",
+      },
+    ];
+  }
+
+  // Add years of experience
+  if (profile.years_experience) {
+    jsonLd.yearsInOperation = profile.years_experience;
+  }
+
+  // Add consultation fee
+  if (profile.consultation_fee) {
+    jsonLd.priceRange = profile.consultation_fee;
+  }
+
+  // Add booking URL
+  if (profile.external_booking_url) {
+    jsonLd.potentialAction = {
+      "@type": "ReserveAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: profile.external_booking_url,
+      },
+      result: {
+        "@type": "Reservation",
+        name: "Medical Appointment",
+      },
+    };
+  }
+
+  // Add verified status
+  if (profile.is_verified) {
+    jsonLd.award = "Verified Doctor";
+  }
+
+  // Add aggregate rating based on recommendations
+  if (profile.recommendation_count > 0) {
+    jsonLd.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: "5",
+      ratingCount: profile.recommendation_count.toString(),
+      bestRating: "5",
+      worstRating: "1",
+    };
+  }
+
+  // Add education timeline
+  if (educationTimeline.length > 0) {
+    jsonLd.alumniOf = educationTimeline.map((edu: { institution?: string; degree?: string; year?: string }) => ({
+      "@type": "EducationalOrganization",
+      name: edu.institution || "Medical Institution",
+    }));
+  }
+
+  return jsonLd;
+}
 
 export default async function ProfilePage({ params }: ProfilePageProps) {
   const { handle } = await params;
@@ -183,23 +343,52 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     profile_photo_url: string | null;
   }>;
 
-  // Route to the correct template
+  // Generate JSON-LD structured data
+  const jsonLd = generateDoctorJsonLd(extendedProfile);
+
+  // Route to the correct template with JSON-LD
   const template = extendedProfile.profile_template || "classic";
+
+  const TemplateWithJsonLd = ({ children }: { children: React.ReactNode }) => (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      {children}
+    </>
+  );
 
   switch (template) {
     case "ocean":
-      return <OceanTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />;
+      return (
+        <TemplateWithJsonLd>
+          <OceanTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />
+        </TemplateWithJsonLd>
+      );
     case "sage":
-      return <SageTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />;
+      return (
+        <TemplateWithJsonLd>
+          <SageTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />
+        </TemplateWithJsonLd>
+      );
     case "warm":
-      return <WarmTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />;
+      return (
+        <TemplateWithJsonLd>
+          <WarmTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />
+        </TemplateWithJsonLd>
+      );
     case "classic":
     default:
-      return <ClassicTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />;
+      return (
+        <TemplateWithJsonLd>
+          <ClassicTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />
+        </TemplateWithJsonLd>
+      );
   }
 }
 
-export async function generateMetadata({ params }: ProfilePageProps) {
+export async function generateMetadata({ params }: ProfilePageProps): Promise<Metadata> {
   const { handle } = await params;
 
   // Use cached profile fetch - deduplicates with page component
@@ -207,21 +396,69 @@ export async function generateMetadata({ params }: ProfilePageProps) {
 
   if (!profile) {
     return {
-      title: "Profile Not Found | Verified.Doctor",
+      title: "Profile Not Found",
+      description: "This doctor profile could not be found on Verified.Doctor",
     };
   }
 
+  const profileUrl = `${baseUrl}/${profile.handle}`;
+  const title = profile.is_verified
+    ? `Dr. ${profile.full_name} - Verified ${profile.specialty || "Doctor"}`
+    : `${profile.full_name} - ${profile.specialty || "Medical Professional"}`;
+
   const description = profile.bio
     ? profile.bio.slice(0, 160)
-    : `${profile.specialty}${profile.clinic_location ? ` at ${profile.clinic_location}` : ""}`;
+    : `${profile.is_verified ? "Verified " : ""}${profile.specialty || "Medical Professional"}${profile.clinic_location ? ` practicing in ${profile.clinic_location}` : ""}. ${profile.years_experience ? `${profile.years_experience} years of experience. ` : ""}Book an appointment or send an inquiry.`;
+
+  const keywords = [
+    profile.full_name,
+    profile.specialty,
+    profile.clinic_location,
+    "verified doctor",
+    "medical professional",
+    profile.clinic_name,
+    ...(profile.services?.split(",").map(s => s.trim()) || []),
+    ...(profile.conditions_treated?.split(",").map(c => c.trim()) || []),
+  ].filter(Boolean) as string[];
 
   return {
-    title: `${profile.full_name} | Verified.Doctor`,
+    title,
     description,
+    keywords,
+    authors: [{ name: profile.full_name }],
     openGraph: {
-      title: `${profile.full_name} | Verified.Doctor`,
+      title,
       description,
       type: "profile",
+      url: profileUrl,
+      siteName: "Verified.Doctor",
+      images: profile.profile_photo_url ? [
+        {
+          url: profile.profile_photo_url,
+          width: 400,
+          height: 400,
+          alt: `${profile.full_name} - Profile Photo`,
+        },
+      ] : undefined,
+      firstName: profile.full_name.split(" ")[0],
+      lastName: profile.full_name.split(" ").slice(1).join(" "),
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+      images: profile.profile_photo_url ? [profile.profile_photo_url] : undefined,
+    },
+    alternates: {
+      canonical: profileUrl,
+    },
+    robots: {
+      index: !profile.is_frozen,
+      follow: true,
+    },
+    other: {
+      "profile:type": "medical_professional",
+      ...(profile.is_verified && { "profile:verified": "true" }),
     },
   };
 }

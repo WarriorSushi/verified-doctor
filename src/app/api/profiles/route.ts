@@ -252,6 +252,14 @@ export async function POST(request: Request) {
               } catch (rpcError) {
                 // Fallback: manually increment counts if RPC fails
                 console.warn("[profiles] RPC increment failed, using fallback:", rpcError);
+
+                // First get the inviter's current count
+                const { data: inviterProfile } = await supabase
+                  .from("profiles")
+                  .select("connection_count")
+                  .eq("id", invite.inviter_profile_id)
+                  .single();
+
                 await Promise.all([
                   supabase
                     .from("profiles")
@@ -259,7 +267,7 @@ export async function POST(request: Request) {
                     .eq("id", profile.id),
                   supabase
                     .from("profiles")
-                    .update({ connection_count: supabase.rpc("increment_field", { row_id: invite.inviter_profile_id, field: "connection_count" }) })
+                    .update({ connection_count: (inviterProfile?.connection_count || 0) + 1 })
                     .eq("id", invite.inviter_profile_id),
                 ]).catch((fallbackError) => {
                   console.error("[profiles] Fallback increment also failed:", fallbackError);
