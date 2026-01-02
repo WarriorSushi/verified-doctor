@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Call OpenRouter API
+    // Call OpenRouter API with free model
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
         "X-Title": "Verified.Doctor",
       },
       body: JSON.stringify({
-        model: "anthropic/claude-3-haiku", // Fast and cost-effective
+        model: "xiaomi/mimo-v2-flash:free", // Free model
         messages: [
           {
             role: "system",

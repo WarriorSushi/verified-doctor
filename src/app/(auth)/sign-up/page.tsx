@@ -34,12 +34,7 @@ function SignUpForm() {
       const { data, error: signUpError } = await clientAuth.signUp(
         email,
         password,
-        {
-          full_name: name,
-          // Store handle and invite code in user metadata for use after confirmation
-          claimed_handle: claimedHandle || undefined,
-          invite_code: inviteCode || undefined,
-        }
+        { full_name: name }
       );
 
       if (signUpError) {

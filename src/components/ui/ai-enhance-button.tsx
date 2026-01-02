@@ -92,7 +92,7 @@ export function AIEnhanceButton({
         ) : (
           <>
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Enhance with AI</span>
+            <span>Enhance for free with AI</span>
           </>
         )}
       </Button>
