@@ -32,6 +32,7 @@ import { TagInput } from "./tag-input";
 import { VideoEmbedPreview } from "./video-embed-preview";
 import { ImageGalleryEditor } from "./image-gallery-editor";
 import { AIEnhanceButton } from "@/components/ui/ai-enhance-button";
+import { AISuggestTags } from "@/components/ui/ai-suggest-tags";
 import { cn } from "@/lib/utils";
 
 interface ProfileBuilderProps {
@@ -234,12 +235,26 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
           isVisible={isSectionVisible("conditions")}
           onVisibilityChange={(v) => toggleVisibility("conditions", v)}
         >
-          <TagInput
-            value={formData.conditionsTreated}
-            onChange={(v) => updateField("conditionsTreated", v)}
-            placeholder="e.g., Hypertension"
-            maxTags={30}
-          />
+          <div className="space-y-4">
+            <TagInput
+              value={formData.conditionsTreated}
+              onChange={(v) => updateField("conditionsTreated", v)}
+              placeholder="e.g., Hypertension"
+              maxTags={30}
+            />
+            <AISuggestTags
+              currentTags={formData.conditionsTreated ? formData.conditionsTreated.split(",").map(t => t.trim()).filter(Boolean) : []}
+              specialty={profile.specialty || ""}
+              type="conditions"
+              onAddTag={(tag) => {
+                const currentTags = formData.conditionsTreated ? formData.conditionsTreated.split(",").map(t => t.trim()).filter(Boolean) : [];
+                if (!currentTags.includes(tag)) {
+                  updateField("conditionsTreated", [...currentTags, tag].join(", "));
+                }
+              }}
+              disabled={!profile.specialty}
+            />
+          </div>
         </SectionWrapper>
 
         {/* Procedures Performed */}
@@ -250,12 +265,26 @@ export function ProfileBuilder({ profile }: ProfileBuilderProps) {
           isVisible={isSectionVisible("procedures")}
           onVisibilityChange={(v) => toggleVisibility("procedures", v)}
         >
-          <TagInput
-            value={formData.proceduresPerformed}
-            onChange={(v) => updateField("proceduresPerformed", v)}
-            placeholder="e.g., Angioplasty"
-            maxTags={30}
-          />
+          <div className="space-y-4">
+            <TagInput
+              value={formData.proceduresPerformed}
+              onChange={(v) => updateField("proceduresPerformed", v)}
+              placeholder="e.g., Angioplasty"
+              maxTags={30}
+            />
+            <AISuggestTags
+              currentTags={formData.proceduresPerformed ? formData.proceduresPerformed.split(",").map(t => t.trim()).filter(Boolean) : []}
+              specialty={profile.specialty || ""}
+              type="procedures"
+              onAddTag={(tag) => {
+                const currentTags = formData.proceduresPerformed ? formData.proceduresPerformed.split(",").map(t => t.trim()).filter(Boolean) : [];
+                if (!currentTags.includes(tag)) {
+                  updateField("proceduresPerformed", [...currentTags, tag].join(", "));
+                }
+              }}
+              disabled={!profile.specialty}
+            />
+          </div>
         </SectionWrapper>
 
         {/* Approach to Care */}

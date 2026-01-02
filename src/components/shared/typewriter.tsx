@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 const NAMES = [
   "anna", "arjun", "abdul", "chong", "priya",
   "dave", "fatima", "rohan", "mateo", "wei",
-  "anjali", "kwame", "vikram", "sarah", "meera"
+  "anjali", "kwame", "vikram", "sarah", "meera",
+  "asra", "irfan"
 ];
 
 const TYPING_SPEED = 100;

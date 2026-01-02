@@ -1,0 +1,217 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { createClient } from "@/lib/supabase/server";
+import { getAuth } from "@/lib/auth";
+import { sendEmail } from "@/lib/email/send";
+
+const ADMIN_EMAIL = "drsyedirfan93@gmail.com";
+
+const supportSchema = z.object({
+  subject: z.string().min(1, "Subject is required").max(200),
+  message: z.string().min(1, "Message is required").max(2000),
+});
+
+export async function POST(request: Request) {
+  try {
+    const { userId } = await getAuth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const result = supportSchema.safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: "Invalid request", details: result.error.issues },
+        { status: 400 }
+      );
+    }
+
+    const { subject, message } = result.data;
+    const supabase = await createClient();
+
+    // Get the user's profile
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, full_name, handle, specialty")
+      .eq("user_id", userId)
+      .single();
+
+    if (profileError || !profile) {
+      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+    }
+
+    // Save the support message to database
+    const { data: supportMessage, error: insertError } = await supabase
+      .from("support_messages")
+      .insert({
+        profile_id: profile.id,
+        subject,
+        message,
+        status: "open",
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("[support] Insert error:", insertError);
+      // If table doesn't exist, still try to send email
+      if (insertError.code !== "42P01") {
+        return NextResponse.json(
+          { error: "Failed to save message" },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Send email notification to admin
+    const profileUrl = `https://verified.doctor/${profile.handle}`;
+    const adminPanelUrl = `https://verified.doctor/admin/support`;
+
+    const emailHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b; margin: 0; padding: 0; background: #f8fafc; }
+    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+    .card { background: white; border-radius: 12px; padding: 40px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    h1 { color: #0f172a; font-size: 20px; margin: 0 0 16px 0; }
+    p { color: #475569; line-height: 1.6; margin: 0 0 16px 0; }
+    .user-info { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1px solid #bae6fd; border-radius: 12px; padding: 16px; margin: 20px 0; }
+    .user-name { font-size: 16px; font-weight: 600; color: #0369a1; margin-bottom: 4px; }
+    .user-detail { font-size: 14px; color: #0284c7; }
+    .message-box { background: #f1f5f9; padding: 16px; border-radius: 8px; border-left: 4px solid #0099F7; margin: 20px 0; }
+    .message-subject { font-weight: 600; color: #0f172a; margin-bottom: 8px; font-size: 16px; }
+    .message-content { color: #334155; white-space: pre-wrap; }
+    .button { display: inline-block; background: linear-gradient(135deg, #0099F7 0%, #0080CC 100%); color: white !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; }
+    .footer { text-align: center; margin-top: 30px; color: #94a3b8; font-size: 14px; }
+    .timestamp { color: #94a3b8; font-size: 12px; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>New Support Request</h1>
+
+      <div class="user-info">
+        <div class="user-name">${profile.full_name}</div>
+        <div class="user-detail">${profile.specialty || "Doctor"}</div>
+        <div class="user-detail">
+          <a href="${profileUrl}" style="color: #0099F7;">verified.doctor/${profile.handle}</a>
+        </div>
+      </div>
+
+      <div class="message-box">
+        <p class="message-subject">${subject}</p>
+        <p class="message-content">${message}</p>
+      </div>
+
+      <center>
+        <a href="${adminPanelUrl}" class="button">View in Admin Panel</a>
+      </center>
+
+      <p class="timestamp">Received: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST</p>
+    </div>
+
+    <div class="footer">
+      <p>Verified.Doctor Support System</p>
+    </div>
+  </div>
+</body>
+</html>
+    `.trim();
+
+    const emailText = `
+New Support Request
+
+From: ${profile.full_name} (${profile.specialty || "Doctor"})
+Profile: ${profileUrl}
+
+Subject: ${subject}
+
+Message:
+${message}
+
+---
+Received: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST
+View in Admin Panel: ${adminPanelUrl}
+    `.trim();
+
+    // Send email to admin
+    await sendEmail({
+      to: ADMIN_EMAIL,
+      subject: `[Support] ${subject} - ${profile.full_name}`,
+      html: emailHtml,
+      text: emailText,
+      replyTo: ADMIN_EMAIL,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Support request submitted successfully",
+      ticketId: supportMessage?.id,
+    });
+  } catch (error) {
+    console.error("[support] Error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// GET - List support messages for admin
+export async function GET(request: Request) {
+  try {
+    const { userId } = await getAuth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if user is admin
+    const { isAdmin } = await import("@/lib/admin-auth");
+    if (!isAdmin(userId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const supabase = await createClient();
+    const url = new URL(request.url);
+    const status = url.searchParams.get("status") || "all";
+
+    let query = supabase
+      .from("support_messages")
+      .select(`
+        *,
+        profile:profiles!support_messages_profile_id_fkey(
+          id, full_name, handle, specialty, profile_photo_url
+        )
+      `)
+      .order("created_at", { ascending: false });
+
+    if (status !== "all") {
+      query = query.eq("status", status);
+    }
+
+    const { data: messages, error } = await query;
+
+    if (error) {
+      console.error("[support] Fetch error:", error);
+      return NextResponse.json(
+        { error: "Failed to fetch messages" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ messages });
+  } catch (error) {
+    console.error("[support] Error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

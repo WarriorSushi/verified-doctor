@@ -2,17 +2,23 @@ import { Navbar } from "@/components/layout/navbar";
 import { HeroSection } from "@/components/landing/hero-section";
 import { RecentlyClaimed } from "@/components/landing/recently-claimed";
 import { FeaturesSection } from "@/components/landing/features-section";
-import { HowItWorksSection } from "@/components/landing/how-it-works-section";
+import { UseCasesSection } from "@/components/landing/use-cases-section";
+import { TrustSignalsSection } from "@/components/landing/trust-signals-section";
+import { TestimonialsSection } from "@/components/landing/testimonials-section";
+import { CTASection } from "@/components/landing/cta-section";
 import { Footer } from "@/components/landing/footer";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-white">
+    <main id="top" className="min-h-screen bg-white">
       <Navbar />
       <HeroSection />
       <RecentlyClaimed />
       <FeaturesSection />
-      <HowItWorksSection />
+      <UseCasesSection />
+      <TrustSignalsSection />
+      <TestimonialsSection />
+      <CTASection />
       <Footer />
     </main>
   );

@@ -5,6 +5,7 @@ import { z } from "zod";
 const enhanceSchema = z.object({
   text: z.string().min(1).max(2000),
   type: z.enum(["bio", "approach", "first_visit", "conditions", "procedures"]),
+  length: z.enum(["short", "medium", "long"]).default("medium"),
 });
 
 // Models to try in order (primary + fallbacks)
@@ -13,6 +14,20 @@ const AI_MODELS = [
   "tngtech/deepseek-r1t-chimera:free",
   "deepseek/deepseek-r1-0528:free",
 ];
+
+// Token limits based on length preference
+const LENGTH_TOKENS: Record<string, number> = {
+  short: 150,   // ~50-75 words
+  medium: 300,  // ~100-150 words
+  long: 500,    // ~200-250 words
+};
+
+// Length instructions to append to system prompts
+const LENGTH_INSTRUCTIONS: Record<string, string> = {
+  short: "\n\nIMPORTANT: Keep your response very concise, under 75 words. Be brief but impactful.",
+  medium: "\n\nKeep your response moderate in length, around 100-150 words.",
+  long: "\n\nProvide a detailed, comprehensive response, up to 250 words.",
+};
 
 // System prompts for different content types
 const SYSTEM_PROMPTS: Record<string, string> = {
@@ -66,7 +81,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { text, type } = result.data;
+    const { text, type, length } = result.data;
 
     // Check for OpenRouter API key
     const apiKey = process.env.OPENROUTER_API_KEY;
@@ -97,14 +112,14 @@ export async function POST(request: NextRequest) {
             messages: [
               {
                 role: "system",
-                content: SYSTEM_PROMPTS[type],
+                content: SYSTEM_PROMPTS[type] + LENGTH_INSTRUCTIONS[length],
               },
               {
                 role: "user",
                 content: `Please enhance the following text:\n\n${text}`,
               },
             ],
-            max_tokens: 500,
+            max_tokens: LENGTH_TOKENS[length],
             temperature: 0.7,
           }),
         });

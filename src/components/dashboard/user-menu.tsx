@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, User, Settings, ChevronDown } from "lucide-react";
+import Image from "next/image";
+import { LogOut, User, Settings, ChevronDown, HelpCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,9 +16,10 @@ import { toast } from "sonner";
 interface UserMenuProps {
   fullName: string;
   handle: string;
+  profilePhotoUrl?: string | null;
 }
 
-export function UserMenu({ fullName, handle }: UserMenuProps) {
+export function UserMenu({ fullName, handle, profilePhotoUrl }: UserMenuProps) {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -52,9 +54,21 @@ export function UserMenu({ fullName, handle }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center gap-1.5 focus:outline-none group">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0099F7] to-[#0080CC] flex items-center justify-center text-white text-xs sm:text-sm font-bold">
-          {initials}
-        </div>
+        {profilePhotoUrl ? (
+          <div className="relative w-8 h-8 rounded-full overflow-hidden ring-2 ring-white shadow-sm">
+            <Image
+              src={profilePhotoUrl}
+              alt={fullName}
+              fill
+              className="object-cover"
+              sizes="32px"
+            />
+          </div>
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0099F7] to-[#0080CC] flex items-center justify-center text-white text-xs sm:text-sm font-bold ring-2 ring-white shadow-sm">
+            {initials}
+          </div>
+        )}
         <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
@@ -76,6 +90,13 @@ export function UserMenu({ fullName, handle }: UserMenuProps) {
         >
           <Settings className="w-4 h-4 mr-2" />
           Settings
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => router.push("/dashboard/help")}
+          className="cursor-pointer"
+        >
+          <HelpCircle className="w-4 h-4 mr-2" />
+          Help & Support
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

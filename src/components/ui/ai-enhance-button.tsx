@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type EnhanceType = "bio" | "approach" | "first_visit" | "conditions" | "procedures";
+type EnhanceLength = "short" | "medium" | "long";
 
 interface AIEnhanceButtonProps {
   text: string;
@@ -13,7 +14,14 @@ interface AIEnhanceButtonProps {
   onEnhance: (enhancedText: string) => void;
   disabled?: boolean;
   className?: string;
+  showLengthSelector?: boolean;
 }
+
+const LENGTH_LABELS: Record<EnhanceLength, string> = {
+  short: "Short",
+  medium: "Medium",
+  long: "Long",
+};
 
 export function AIEnhanceButton({
   text,
@@ -21,10 +29,12 @@ export function AIEnhanceButton({
   onEnhance,
   disabled = false,
   className,
+  showLengthSelector = true,
 }: AIEnhanceButtonProps) {
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [length, setLength] = useState<EnhanceLength>("medium");
 
   const handleEnhance = async () => {
     if (!text.trim() || isEnhancing || disabled) return;
@@ -36,7 +46,7 @@ export function AIEnhanceButton({
       const response = await fetch("/api/enhance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, type }),
+        body: JSON.stringify({ text, type, length }),
       });
 
       const data = await response.json();
@@ -59,7 +69,30 @@ export function AIEnhanceButton({
   const isDisabled = disabled || isEnhancing || !text.trim();
 
   return (
-    <div className="relative">
+    <div className="relative flex flex-wrap items-center gap-2">
+      {/* Length Selector */}
+      {showLengthSelector && (
+        <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5">
+          {(Object.keys(LENGTH_LABELS) as EnhanceLength[]).map((len) => (
+            <button
+              key={len}
+              type="button"
+              onClick={() => setLength(len)}
+              disabled={isEnhancing}
+              className={cn(
+                "px-2.5 py-1 text-xs font-medium rounded-md transition-all",
+                length === len
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              {LENGTH_LABELS[len]}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Enhance Button */}
       <Button
         type="button"
         variant="outline"

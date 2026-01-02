@@ -37,11 +37,23 @@ export async function GET(request: Request, { params }: RouteParams) {
       );
     }
 
+    // Check if invite has expired
+    if (invite.expires_at) {
+      const expiresAt = new Date(invite.expires_at);
+      if (expiresAt < new Date()) {
+        return NextResponse.json(
+          { error: "This invite has expired", valid: false, expired: true },
+          { status: 400 }
+        );
+      }
+    }
+
     return NextResponse.json({
       valid: true,
       invite: {
         code: invite.invite_code,
         inviter: invite.inviter,
+        expiresAt: invite.expires_at,
       },
     });
   } catch (error) {

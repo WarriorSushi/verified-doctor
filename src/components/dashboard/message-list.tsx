@@ -208,30 +208,30 @@ export function MessageList({ messages: initialMessages, profileId }: MessageLis
                 </div>
               </button>
 
-              {/* Delete button */}
+              {/* Delete button - visible on mobile, hover on desktop */}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-red-500 hover:bg-red-50"
+                    className="absolute top-4 right-4 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-slate-400 hover:text-red-500 hover:bg-red-50"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="max-w-[90vw] sm:max-w-lg">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete message?</AlertDialogTitle>
                     <AlertDialogDescription>
                       This will remove the message from your inbox. This action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                    <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={(e: React.MouseEvent) => handleDeleteMessage(message.id, e)}
-                      className="bg-red-500 hover:bg-red-600"
+                      className="w-full sm:w-auto bg-red-500 hover:bg-red-600"
                     >
                       Delete
                     </AlertDialogAction>
@@ -248,9 +248,11 @@ export function MessageList({ messages: initialMessages, profileId }: MessageLis
         open={!!selectedMessage}
         onOpenChange={() => setSelectedMessage(null)}
       >
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Message from {selectedMessage?.sender_name}</DialogTitle>
+            <div className="flex items-center justify-between pr-8">
+              <DialogTitle>Message from {selectedMessage?.sender_name}</DialogTitle>
+            </div>
           </DialogHeader>
 
           {selectedMessage && (

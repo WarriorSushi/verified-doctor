@@ -13,12 +13,16 @@ import {
   X,
   ExternalLink,
   Sparkles,
+  Users,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageCropper } from "@/components/ui/image-cropper";
+import { AIEnhanceButton } from "@/components/ui/ai-enhance-button";
+import { AISuggestTags } from "@/components/ui/ai-suggest-tags";
 import { uploadProfilePhoto } from "@/lib/upload";
 import { getUser } from "@/lib/auth/client";
 
@@ -89,6 +93,38 @@ function OnboardingForm() {
 
   // Retrieve invite code from URL or localStorage
   const [inviteCode, setInviteCode] = useState<string | null>(urlInviteCode);
+  const [inviteStatus, setInviteStatus] = useState<{
+    valid: boolean | null;
+    inviterName?: string;
+    error?: string;
+  }>({ valid: null });
+
+  // Validate invite code
+  const validateInvite = async (code: string) => {
+    try {
+      const response = await fetch(`/api/invites/${code}`);
+      const data = await response.json();
+
+      if (data.valid) {
+        setInviteStatus({
+          valid: true,
+          inviterName: data.invite?.inviter?.full_name,
+        });
+      } else {
+        setInviteStatus({
+          valid: false,
+          error: data.error || "Invalid invite code",
+        });
+        // Clear invalid invite code
+        setInviteCode(null);
+      }
+    } catch {
+      setInviteStatus({
+        valid: false,
+        error: "Could not validate invite",
+      });
+    }
+  };
 
   // On mount, check for handle and invite code from localStorage (set during signup)
   useEffect(() => {
@@ -104,8 +140,10 @@ function OnboardingForm() {
     }
 
     // Set invite code from URL or localStorage
-    if (!urlInviteCode && storedInviteCode) {
-      setInviteCode(storedInviteCode);
+    const finalInviteCode = urlInviteCode || storedInviteCode;
+    if (finalInviteCode) {
+      setInviteCode(finalInviteCode);
+      validateInvite(finalInviteCode);
     }
 
     // Clean up localStorage after retrieving
@@ -294,6 +332,30 @@ function OnboardingForm() {
             {/* Step 1: Basic Info */}
             {step === 1 && (
               <>
+                {/* Invite Status Banner */}
+                {inviteCode && inviteStatus.valid === true && (
+                  <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center gap-3">
+                    <Users className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-emerald-800">
+                        <span className="font-medium">{inviteStatus.inviterName || "A colleague"}</span> invited you to join!
+                      </p>
+                      <p className="text-xs text-emerald-600">You&apos;ll be connected automatically</p>
+                    </div>
+                    <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                  </div>
+                )}
+
+                {inviteCode && inviteStatus.valid === false && (
+                  <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 flex items-center gap-3">
+                    <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-amber-800">{inviteStatus.error}</p>
+                      <p className="text-xs text-amber-600">You can still create your profile</p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="text-center mb-6 sm:mb-8">
                   <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">
                     Let&apos;s set up your profile
@@ -546,21 +608,36 @@ function OnboardingForm() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="services" className="text-sm sm:text-base">
-                      Services
-                      <span className="ml-1 text-slate-400 font-normal text-xs sm:text-sm">
-                        (comma separated)
-                      </span>
-                    </Label>
-                    <Input
-                      id="services"
-                      type="text"
-                      value={services}
-                      onChange={(e) => setServices(e.target.value)}
-                      placeholder="ECG, Echocardiography, Stress Test"
-                      className="h-10 sm:h-12 text-sm sm:text-base"
-                    />
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="services" className="text-sm sm:text-base">
+                        Services
+                        <span className="ml-1 text-slate-400 font-normal text-xs sm:text-sm">
+                          (comma separated)
+                        </span>
+                      </Label>
+                      <Input
+                        id="services"
+                        type="text"
+                        value={services}
+                        onChange={(e) => setServices(e.target.value)}
+                        placeholder="ECG, Echocardiography, Stress Test"
+                        className="h-10 sm:h-12 text-sm sm:text-base"
+                      />
+                    </div>
+                    {specialty && (
+                      <AISuggestTags
+                        currentTags={services ? services.split(",").map(t => t.trim()).filter(Boolean) : []}
+                        specialty={specialty}
+                        type="procedures"
+                        onAddTag={(tag) => {
+                          const currentTags = services ? services.split(",").map(t => t.trim()).filter(Boolean) : [];
+                          if (!currentTags.includes(tag)) {
+                            setServices([...currentTags, tag].join(", "));
+                          }
+                        }}
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -674,9 +751,17 @@ function OnboardingForm() {
                       maxLength={500}
                       className="resize-none text-sm sm:text-base"
                     />
-                    <p className="text-xs text-slate-400 text-right">
-                      {bio.length}/500
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <AIEnhanceButton
+                        text={bio}
+                        type="bio"
+                        onEnhance={(text) => setBio(text)}
+                        showLengthSelector={true}
+                      />
+                      <p className="text-xs text-slate-400">
+                        {bio.length}/500
+                      </p>
+                    </div>
                   </div>
 
                   {/* Booking URL */}

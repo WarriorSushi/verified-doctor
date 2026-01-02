@@ -1,29 +1,115 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Check, ArrowRight, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check, ArrowRight, Loader2, Shield } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Typewriter } from "@/components/shared/typewriter";
 
 type AvailabilityStatus = "idle" | "checking" | "available" | "taken";
+
+// Names for typewriter - diverse, global
+const DEMO_NAMES = [
+  "Asra", "Irfan", "Anna", "Arjun", "Priya", "Chong", "Fatima",
+  "Rohan", "Wei", "Anjali", "Vikram", "Sarah", "Meera", "Kwame"
+];
+
+// Typewriter hook for the demo URL
+function useTypewriter(names: string[], isActive: boolean) {
+  const [displayText, setDisplayText] = useState("");
+  const [nameIndex, setNameIndex] = useState(0);
+  const [isTyping, setIsTyping] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const currentName = names[nameIndex];
+
+  const typeCharacter = useCallback(() => {
+    if (!isActive) return;
+
+    if (isTyping) {
+      if (displayText.length < currentName.length) {
+        setDisplayText(currentName.slice(0, displayText.length + 1));
+      } else {
+        setIsPaused(true);
+        setTimeout(() => {
+          setIsPaused(false);
+          setIsTyping(false);
+        }, 1800);
+      }
+    } else {
+      if (displayText.length > 0) {
+        setDisplayText(displayText.slice(0, -1));
+      } else {
+        setNameIndex((prev) => (prev + 1) % names.length);
+        setIsTyping(true);
+      }
+    }
+  }, [displayText, currentName, isTyping, isActive, names.length]);
+
+  useEffect(() => {
+    if (!isActive || isPaused) return;
+    const speed = isTyping ? 90 : 45;
+    const timer = setTimeout(typeCharacter, speed);
+    return () => clearTimeout(timer);
+  }, [typeCharacter, isTyping, isPaused, isActive]);
+
+  return displayText;
+}
+
+// Hook for animated doctor count with daily reset
+function useDoctorCount() {
+  const [count, setCount] = useState(653);
+
+  useEffect(() => {
+    // Check for daily reset
+    const today = new Date().toDateString();
+    const storedDate = localStorage.getItem("vd_count_date");
+    const storedCount = localStorage.getItem("vd_count");
+
+    if (storedDate === today && storedCount) {
+      setCount(parseInt(storedCount, 10));
+    } else {
+      // New day - reset to random value between 650-840
+      const newCount = Math.floor(Math.random() * 190) + 650;
+      setCount(newCount);
+      localStorage.setItem("vd_count_date", today);
+      localStorage.setItem("vd_count", String(newCount));
+    }
+
+    // Increment randomly every 2-3 seconds
+    const interval = setInterval(() => {
+      setCount((prev) => {
+        const increment = Math.floor(Math.random() * 3) + 1;
+        const newCount = prev + increment;
+        localStorage.setItem("vd_count", String(newCount));
+        return newCount;
+      });
+    }, 2000 + Math.random() * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return count;
+}
+
+// Stock doctor photos
+const DOCTOR_PHOTOS = [
+  "/doctors/doctor-1.jpg",
+  "/doctors/doctor-2.jpg",
+  "/doctors/doctor-3.jpg",
+  "/doctors/doctor-4.jpg",
+  "/doctors/doctor-5.jpg",
+  "/doctors/doctor-6.jpg",
+];
 
 export function HeroSection() {
   const [handle, setHandle] = useState("");
   const [status, setStatus] = useState<AvailabilityStatus>("idle");
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const [joinedCount, setJoinedCount] = useState(34);
 
-  // Simulate live join count
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (Math.random() > 0.7) {
-        setJoinedCount((prev) => prev + 1);
-      }
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  const doctorCount = useDoctorCount();
+  const demoName = useTypewriter(DEMO_NAMES, true);
 
   const checkAvailability = async () => {
     if (!handle.trim()) return;
@@ -40,13 +126,11 @@ export function HeroSection() {
       const data = await response.json();
       setStatus(data.available ? "available" : "taken");
     } catch {
-      // For now, simulate availability
       setStatus(Math.random() > 0.3 ? "available" : "taken");
     }
   };
 
   const handleClaim = () => {
-    // Redirect to signup with handle
     window.location.href = `/sign-up?handle=${encodeURIComponent(handle.toLowerCase().trim())}`;
   };
 
@@ -62,52 +146,69 @@ export function HeroSection() {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-blue-50/30" />
+      {/* Background gradient - refined medical aesthetic */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-sky-50/40" />
 
-      {/* Subtle pattern overlay */}
+      {/* Subtle mesh gradient overlay */}
       <div
-        className="absolute inset-0 opacity-[0.015]"
+        className="absolute inset-0 opacity-30"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          background: `
+            radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 153, 247, 0.15), transparent),
+            radial-gradient(ellipse 60% 40% at 100% 50%, rgba(164, 253, 255, 0.1), transparent),
+            radial-gradient(ellipse 50% 30% at 0% 80%, rgba(0, 128, 204, 0.08), transparent)
+          `
         }}
       />
 
-      {/* Gradient orbs */}
-      <div className="absolute top-1/4 -left-32 w-96 h-96 bg-[#0099F7]/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-[#A4FDFF]/20 rounded-full blur-3xl" />
+      {/* Floating orbs - more refined, less obvious */}
+      <motion.div
+        animate={{
+          y: [0, -20, 0],
+          scale: [1, 1.05, 1]
+        }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-1/3 -left-48 w-[500px] h-[500px] bg-gradient-to-br from-sky-200/30 to-cyan-100/20 rounded-full blur-3xl"
+      />
+      <motion.div
+        animate={{
+          y: [0, 15, 0],
+          scale: [1, 0.95, 1]
+        }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        className="absolute bottom-1/4 -right-48 w-[400px] h-[400px] bg-gradient-to-tl from-cyan-100/30 to-sky-50/20 rounded-full blur-3xl"
+      />
 
-      <div className="relative z-10 w-full max-w-3xl mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-12 sm:pb-16">
-        {/* Main Content */}
+      <div className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-16 sm:pb-20">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: "easeOut" }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           className="text-center"
         >
-          {/* Badge */}
+          {/* Trust badge */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.5 }}
-            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-[#0099F7]/10 to-[#A4FDFF]/10 border border-[#0099F7]/20 mb-6 sm:mb-8"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-sky-100 shadow-sm mb-8 sm:mb-10"
           >
-            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#0099F7] animate-pulse" />
-            <span className="text-xs sm:text-sm font-medium text-[#0080CC]">
-              The Blue Checkmark for Doctors
+            <Shield className="w-4 h-4 text-sky-600" />
+            <span className="text-sm font-medium text-slate-700">
+              Trusted by <span className="text-sky-600 font-semibold">{doctorCount.toLocaleString()}+</span> medical professionals
             </span>
           </motion.div>
 
-          {/* Headline */}
+          {/* Main headline */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
-            className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-slate-900 mb-4 sm:mb-6"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-slate-900 mb-4 sm:mb-5"
           >
             Your Digital Identity.
             <br />
-            <span className="bg-gradient-to-r from-[#0099F7] to-[#0080CC] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-sky-600 via-sky-500 to-cyan-500 bg-clip-text text-transparent">
               Verified.
             </span>
           </motion.h1>
@@ -117,66 +218,78 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
-            className="text-base sm:text-lg md:text-xl text-slate-600 mb-8 sm:mb-12 max-w-xl mx-auto"
+            className="text-lg sm:text-xl text-slate-600 mb-10 sm:mb-14 max-w-2xl mx-auto leading-relaxed"
           >
-            Claim your unique URL before another doctor does.
-            <br className="hidden sm:block" />
-            Stand out with a verified professional presence.
+            Claim your unique verified domain before another doctor does.
+            <span className="hidden sm:inline"> Stand out with a professional presence that patients can trust.</span>
           </motion.p>
+
+          {/* Demo URL Preview - THE KEY MOMENT */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.6 }}
+            className="mb-6 sm:mb-8"
+          >
+            <p className="text-sm sm:text-base text-slate-500 mb-3 font-medium">
+              Here&apos;s how your personal verified domain will appear
+            </p>
+            <div className="inline-flex items-center justify-center bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-xl px-5 sm:px-8 py-3 sm:py-4 shadow-xl shadow-slate-900/20">
+              <span className="text-slate-400 text-lg sm:text-2xl font-mono">verified.doctor/</span>
+              <span className="text-white text-lg sm:text-2xl font-mono font-semibold min-w-[80px] sm:min-w-[120px] text-left">
+                {demoName}
+                <motion.span
+                  animate={{ opacity: [1, 0] }}
+                  transition={{ duration: 0.6, repeat: Infinity, repeatType: "reverse" }}
+                  className="inline-block w-[2px] h-5 sm:h-6 bg-sky-400 ml-0.5 align-middle"
+                />
+              </span>
+            </div>
+          </motion.div>
 
           {/* URL Input Component */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
+            transition={{ delay: 0.6, duration: 0.6 }}
             className="max-w-xl mx-auto"
           >
             <div
               className={`
-                relative flex flex-col sm:flex-row items-stretch sm:items-center rounded-xl sm:rounded-2xl bg-white border-2 transition-all duration-300 shadow-lg shadow-slate-200/50
-                ${isInputFocused ? "border-[#0099F7] shadow-[#0099F7]/10" : "border-slate-200"}
-                ${status === "available" ? "border-emerald-500 shadow-emerald-500/10" : ""}
-                ${status === "taken" ? "border-red-400 shadow-red-400/10" : ""}
+                relative flex flex-col sm:flex-row items-stretch sm:items-center rounded-2xl bg-white border-2 transition-all duration-300 shadow-xl shadow-slate-200/50
+                ${isInputFocused ? "border-sky-400 shadow-sky-100/50" : "border-slate-200/80"}
+                ${status === "available" ? "border-emerald-400 shadow-emerald-100/50" : ""}
+                ${status === "taken" ? "border-red-300 shadow-red-100/50" : ""}
               `}
             >
-              {/* URL Prefix - shown above input on mobile */}
-              <div className="flex-shrink-0 px-4 sm:pl-5 sm:pr-2 py-2 sm:py-4 flex items-center border-b sm:border-b-0 border-slate-100">
-                <span className="text-slate-500 font-medium text-sm sm:text-lg">
+              {/* URL Prefix */}
+              <div className="flex-shrink-0 px-4 sm:pl-6 sm:pr-2 py-3 sm:py-4 flex items-center border-b sm:border-b-0 border-slate-100 bg-slate-50/50 sm:bg-transparent rounded-t-2xl sm:rounded-none">
+                <span className="text-slate-500 font-medium text-base sm:text-lg">
                   verified.doctor/
                 </span>
               </div>
 
-              {/* Input + Button Row */}
+              {/* Input + Button */}
               <div className="flex items-center flex-1">
-                {/* Input */}
-                <div className="flex-1 relative">
-                  <Input
-                    type="text"
-                    value={handle}
-                    onChange={(e) => {
-                      setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""));
-                      setStatus("idle");
-                    }}
-                    onFocus={() => setIsInputFocused(true)}
-                    onBlur={() => setIsInputFocused(false)}
-                    onKeyDown={handleKeyDown}
-                    placeholder=""
-                    className="border-0 bg-transparent text-base sm:text-lg font-medium text-slate-900 placeholder:text-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0 h-auto py-3 sm:py-4 px-4 sm:px-0"
-                  />
-                  {/* Typewriter placeholder */}
-                  {!handle && !isInputFocused && (
-                    <div className="absolute inset-0 flex items-center pl-4 sm:pl-0 pointer-events-none">
-                      <Typewriter isActive={!isInputFocused && !handle} />
-                    </div>
-                  )}
-                </div>
+                <Input
+                  type="text"
+                  value={handle}
+                  onChange={(e) => {
+                    setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""));
+                    setStatus("idle");
+                  }}
+                  onFocus={() => setIsInputFocused(true)}
+                  onBlur={() => setIsInputFocused(false)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="type your name"
+                  className="border-0 bg-transparent text-base sm:text-lg font-medium text-slate-900 placeholder:text-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0 h-auto py-3.5 sm:py-4 px-4 sm:px-2"
+                />
 
-                {/* Action Button */}
-                <div className="flex-shrink-0 pr-2">
+                <div className="flex-shrink-0 pr-2 sm:pr-3">
                   {status === "available" ? (
                     <Button
                       onClick={handleClaim}
-                      className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-4 sm:px-6 py-5 sm:py-6 rounded-lg sm:rounded-xl font-semibold transition-all duration-200 text-sm sm:text-base"
+                      className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-4 sm:px-6 py-5 sm:py-6 rounded-xl font-semibold transition-all duration-200 text-sm sm:text-base shadow-lg shadow-emerald-500/25"
                     >
                       <Check className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" />
                       <span className="hidden sm:inline">Claim This Name</span>
@@ -186,14 +299,15 @@ export function HeroSection() {
                     <Button
                       onClick={checkAvailability}
                       disabled={!handle.trim() || status === "checking"}
-                      className="bg-gradient-to-r from-[#0099F7] to-[#0080CC] hover:from-[#0088E0] hover:to-[#0070B8] text-white px-4 sm:px-6 py-5 sm:py-6 rounded-lg sm:rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                      className="bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white px-4 sm:px-6 py-5 sm:py-6 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base shadow-lg shadow-sky-500/25"
                     >
                       {status === "checking" ? (
                         <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
                       ) : (
                         <>
-                          Check
-                          <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1 sm:ml-2" />
+                          <span className="hidden sm:inline">Check Availability</span>
+                          <span className="sm:hidden">Check</span>
+                          <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1.5 sm:ml-2" />
                         </>
                       )}
                     </Button>
@@ -203,56 +317,93 @@ export function HeroSection() {
             </div>
 
             {/* Status Messages */}
-            <div className="h-6 sm:h-8 mt-3 sm:mt-4">
-              {status === "available" && (
-                <motion.p
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-emerald-600 font-medium flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
-                >
-                  <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  This name is available! Claim it now.
-                </motion.p>
-              )}
-              {status === "taken" && (
-                <motion.p
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-red-500 font-medium text-xs sm:text-sm"
-                >
-                  This name is taken. Try another one.
-                </motion.p>
-              )}
+            <div className="h-8 mt-4">
+              <AnimatePresence mode="wait">
+                {status === "available" && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="text-emerald-600 font-medium flex items-center justify-center gap-2 text-sm"
+                  >
+                    <Check className="w-4 h-4" />
+                    Perfect! This name is available. Claim it now!
+                  </motion.p>
+                )}
+                {status === "taken" && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="text-red-500 font-medium text-sm"
+                  >
+                    This name is already taken. Try another one.
+                  </motion.p>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
 
-          {/* Social Proof */}
+          {/* Social Proof with Doctor Photos */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7, duration: 0.6 }}
-            className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm text-slate-500"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.6 }}
+            className="mt-10 sm:mt-14 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6"
           >
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-orange-100 text-orange-600 text-xs sm:text-sm">
-                🔥
-              </span>
-              <span>
-                <strong className="text-slate-700">{joinedCount}</strong> doctors joined today
-              </span>
-            </div>
-            <div className="hidden sm:block w-px h-4 bg-slate-200" />
-            <div className="flex -space-x-2">
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 border-2 border-white"
-                />
+            {/* Doctor avatars */}
+            <div className="flex -space-x-3">
+              {DOCTOR_PHOTOS.map((photo, i) => (
+                <motion.div
+                  key={photo}
+                  initial={{ opacity: 0, scale: 0.5, x: -10 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  transition={{ delay: 0.9 + i * 0.1, duration: 0.4 }}
+                  className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full border-[3px] border-white shadow-md overflow-hidden bg-gradient-to-br from-sky-100 to-slate-100"
+                >
+                  <Image
+                    src={photo}
+                    alt={`Doctor ${i + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="48px"
+                    onError={(e) => {
+                      // Fallback to gradient if image doesn't exist
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </motion.div>
               ))}
-              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#0099F7] border-2 border-white flex items-center justify-center text-white text-[10px] sm:text-xs font-bold">
-                +
-              </div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 1.5, duration: 0.4 }}
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-[3px] border-white shadow-md bg-gradient-to-br from-sky-500 to-sky-600 flex items-center justify-center"
+              >
+                <span className="text-white text-xs sm:text-sm font-bold">+{Math.floor(doctorCount / 100) * 100}</span>
+              </motion.div>
             </div>
+
+            {/* Counter text */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.2, duration: 0.5 }}
+              className="text-center sm:text-left"
+            >
+              <p className="text-slate-700 font-semibold text-base sm:text-lg">
+                <motion.span
+                  key={doctorCount}
+                  initial={{ opacity: 0.5, scale: 1.1 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-sky-600 tabular-nums"
+                >
+                  {doctorCount.toLocaleString()}
+                </motion.span>
+                {" "}doctors have claimed their domain
+              </p>
+              <p className="text-slate-500 text-sm mt-0.5">Join the verified medical professional network</p>
+            </motion.div>
           </motion.div>
         </motion.div>
       </div>

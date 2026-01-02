@@ -66,6 +66,7 @@ export default async function DashboardLayout({
           <UserMenu
             fullName={profile.full_name}
             handle={profile.handle}
+            profilePhotoUrl={profile.profile_photo_url}
           />
         </div>
 

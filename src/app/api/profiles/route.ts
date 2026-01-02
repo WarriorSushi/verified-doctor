@@ -181,49 +181,98 @@ export async function POST(request: Request) {
 
     // Handle invite code - auto-connect with inviter
     let connectedWith = null;
+    let connectionError: string | null = null;
+
     if (inviteCode) {
-      // Find the invite
-      const { data: invite } = await supabase
-        .from("invites")
-        .select(`
-          id,
-          inviter_profile_id,
-          used,
-          inviter:profiles!invites_inviter_profile_id_fkey(
-            id, full_name, handle
-          )
-        `)
-        .eq("invite_code", inviteCode)
-        .single();
+      try {
+        // Find the invite
+        const { data: invite, error: inviteQueryError } = await supabase
+          .from("invites")
+          .select(`
+            id,
+            inviter_profile_id,
+            used,
+            expires_at,
+            inviter:profiles!invites_inviter_profile_id_fkey(
+              id, full_name, handle
+            )
+          `)
+          .eq("invite_code", inviteCode)
+          .single();
 
-      if (invite && !invite.used) {
-        // Create connection between inviter and new user
-        const { error: connectionError } = await supabase
-          .from("connections")
-          .insert({
-            requester_id: invite.inviter_profile_id,
-            receiver_id: profile.id,
-            status: "accepted",
-          });
+        if (inviteQueryError) {
+          console.warn("[profiles] Invite lookup failed:", inviteQueryError);
+          connectionError = "Could not find invite";
+        } else if (!invite) {
+          connectionError = "Invite not found";
+        } else if (invite.used) {
+          connectionError = "This invite has already been used";
+        } else if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
+          connectionError = "This invite has expired";
+        } else {
+          // Check for existing connection (duplicate check)
+          const { data: existingConnection } = await supabase
+            .from("connections")
+            .select("id")
+            .or(`and(requester_id.eq.${invite.inviter_profile_id},receiver_id.eq.${profile.id}),and(requester_id.eq.${profile.id},receiver_id.eq.${invite.inviter_profile_id})`)
+            .single();
 
-        if (!connectionError) {
-          // Mark invite as used
-          await supabase
-            .from("invites")
-            .update({
-              used: true,
-              used_by_profile_id: profile.id,
-            })
-            .eq("id", invite.id);
+          if (existingConnection) {
+            connectionError = "Already connected with inviter";
+            connectedWith = invite.inviter;
+          } else {
+            // Create connection between inviter and new user
+            const { error: connError } = await supabase
+              .from("connections")
+              .insert({
+                requester_id: invite.inviter_profile_id,
+                receiver_id: profile.id,
+                status: "accepted",
+              });
 
-          // Increment connection counts for both
-          await supabase.rpc("increment_connection_counts", {
-            profile1_uuid: invite.inviter_profile_id,
-            profile2_uuid: profile.id,
-          });
+            if (connError) {
+              console.error("[profiles] Connection creation failed:", connError);
+              connectionError = "Failed to create connection";
+            } else {
+              // Mark invite as used
+              await supabase
+                .from("invites")
+                .update({
+                  used: true,
+                  used_by_profile_id: profile.id,
+                })
+                .eq("id", invite.id);
 
-          connectedWith = invite.inviter;
+              // Increment connection counts for both (with error handling)
+              try {
+                await supabase.rpc("increment_connection_counts", {
+                  profile1_uuid: invite.inviter_profile_id,
+                  profile2_uuid: profile.id,
+                });
+              } catch (rpcError) {
+                // Fallback: manually increment counts if RPC fails
+                console.warn("[profiles] RPC increment failed, using fallback:", rpcError);
+                await Promise.all([
+                  supabase
+                    .from("profiles")
+                    .update({ connection_count: (profile.connection_count || 0) + 1 })
+                    .eq("id", profile.id),
+                  supabase
+                    .from("profiles")
+                    .update({ connection_count: supabase.rpc("increment_field", { row_id: invite.inviter_profile_id, field: "connection_count" }) })
+                    .eq("id", invite.inviter_profile_id),
+                ]).catch((fallbackError) => {
+                  console.error("[profiles] Fallback increment also failed:", fallbackError);
+                });
+              }
+
+              connectedWith = invite.inviter;
+            }
+          }
         }
+      } catch (inviteError) {
+        console.error("[profiles] Invite processing error:", inviteError);
+        connectionError = "Failed to process invite";
       }
     }
 
@@ -238,6 +287,7 @@ export async function POST(request: Request) {
       success: true,
       profile,
       connectedWith,
+      connectionError,
       message: `Your profile is live at verified.doctor/${handle}`,
     });
   } catch (error) {

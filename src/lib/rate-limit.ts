@@ -97,6 +97,19 @@ export function getHandleCheckLimiter(): Ratelimit | null {
   });
 }
 
+// Invite creation: 10 per user per hour
+export function getInviteLimiter(): Ratelimit | null {
+  const redisClient = getRedis();
+  if (!redisClient) return null;
+
+  return new Ratelimit({
+    redis: redisClient,
+    limiter: Ratelimit.slidingWindow(10, "1h"),
+    prefix: "ratelimit:invite",
+    analytics: true,
+  });
+}
+
 // Helper to get client IP from request headers
 export async function getClientIp(): Promise<string> {
   const headersList = await headers();
