@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Shield, Users, ThumbsUp, MessageSquare } from "lucide-react";
 
@@ -37,34 +37,56 @@ const stats = [
 
 function AnimatedCounter({ value, suffix }: { value: number; suffix: string }) {
   const [count, setCount] = useState(0);
-  const [hasAnimated, setHasAnimated] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
 
+  // Intersection Observer to detect when element is in view
   useEffect(() => {
-    if (hasAnimated) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !isVisible) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, [isVisible]);
+
+  // Animate count when visible
+  useEffect(() => {
+    if (!isVisible) return;
 
     const duration = 2000;
     const steps = 60;
     const stepValue = value / steps;
     let current = 0;
+    let frame = 0;
 
     const timer = setInterval(() => {
-      current += stepValue;
-      if (current >= value) {
+      frame++;
+      current = (value * frame) / steps;
+
+      if (frame >= steps) {
         setCount(value);
         clearInterval(timer);
       } else {
-        setCount(Math.floor(current));
+        setCount(value % 1 !== 0 ? current : Math.floor(current));
       }
     }, duration / steps);
 
-    setHasAnimated(true);
     return () => clearInterval(timer);
-  }, [value, hasAnimated]);
+  }, [isVisible, value]);
 
   const displayValue = value % 1 !== 0 ? count.toFixed(1) : count.toLocaleString();
 
   return (
-    <span className="tabular-nums">
+    <span ref={ref} className="tabular-nums">
       {displayValue}{suffix}
     </span>
   );
