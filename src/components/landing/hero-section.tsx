@@ -58,39 +58,79 @@ function useTypewriter(names: string[], isActive: boolean) {
 }
 
 // Hook for animated doctor count with daily reset
+// Starts at 620-720, increments +1-3 every 2-6 seconds, caps at ~1450
 function useDoctorCount() {
-  const [count, setCount] = useState(47);
+  const [count, setCount] = useState(687); // Default for SSR
+  const [displayCount, setDisplayCount] = useState(687);
 
   useEffect(() => {
-    // Check for daily reset - this is "today's" count
+    // Check for daily reset
     const today = new Date().toDateString();
     const storedDate = localStorage.getItem("vd_count_date");
     const storedCount = localStorage.getItem("vd_count_today");
 
+    let initialCount: number;
     if (storedDate === today && storedCount) {
-      setCount(parseInt(storedCount, 10));
+      initialCount = parseInt(storedCount, 10);
     } else {
-      // New day - reset to random value between 35-65
-      const newCount = Math.floor(Math.random() * 30) + 35;
-      setCount(newCount);
+      // New day - reset to random value between 620-720
+      initialCount = Math.floor(Math.random() * 100) + 620;
       localStorage.setItem("vd_count_date", today);
-      localStorage.setItem("vd_count_today", String(newCount));
+      localStorage.setItem("vd_count_today", String(initialCount));
     }
 
-    // Increment randomly every 8-15 seconds
-    const interval = setInterval(() => {
-      setCount((prev) => {
-        const increment = 1;
-        const newCount = prev + increment;
-        localStorage.setItem("vd_count_today", String(newCount));
-        return newCount;
-      });
-    }, 8000 + Math.random() * 7000);
+    setCount(initialCount);
+    setDisplayCount(initialCount);
 
-    return () => clearInterval(interval);
+    // Function to schedule next increment with random delay
+    const scheduleIncrement = () => {
+      // Random delay between 2-6 seconds (2000-6000ms)
+      const delay = 2000 + Math.random() * 4000;
+
+      return setTimeout(() => {
+        setCount((prev) => {
+          // Cap at 1450 to keep it realistic
+          if (prev >= 1450) return prev;
+
+          // Random increment between 1-3
+          const increment = Math.floor(Math.random() * 3) + 1;
+          const newCount = Math.min(prev + increment, 1450);
+          localStorage.setItem("vd_count_today", String(newCount));
+          return newCount;
+        });
+      }, delay);
+    };
+
+    // Start the increment cycle
+    let timeoutId = scheduleIncrement();
+
+    // Set up recurring increments
+    const intervalId = setInterval(() => {
+      clearTimeout(timeoutId);
+      timeoutId = scheduleIncrement();
+    }, 2000 + Math.random() * 4000);
+
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+    };
   }, []);
 
-  return count;
+  // Smooth animation for display count
+  useEffect(() => {
+    if (displayCount === count) return;
+
+    const diff = count - displayCount;
+    const step = diff > 0 ? 1 : -1;
+
+    const timer = setTimeout(() => {
+      setDisplayCount(prev => prev + step);
+    }, 50); // Animate quickly
+
+    return () => clearTimeout(timer);
+  }, [count, displayCount]);
+
+  return displayCount;
 }
 
 // Stock doctor photos - these will be in /public/doctors/
