@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import {
-  BadgeCheck,
   ThumbsUp,
   Users,
   QrCode,
@@ -74,15 +74,21 @@ export function FeaturesSection() {
                 backgroundSize: '32px 32px',
               }} />
 
-              {/* Floating badge illustration */}
+              {/* Floating logo illustration */}
               <motion.div
                 className="absolute top-8 right-8 sm:top-12 sm:right-12"
                 animate={{ y: [0, -8, 0], rotate: [0, 2, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               >
                 <div className="relative">
-                  <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center shadow-2xl">
-                    <BadgeCheck className="w-10 h-10 sm:w-14 sm:h-14 text-white drop-shadow-lg" />
+                  <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center shadow-2xl p-3 sm:p-4">
+                    <Image
+                      src="/verified-doctor-logo.svg"
+                      alt="Verified Doctor Badge"
+                      width={80}
+                      height={80}
+                      className="w-full h-full drop-shadow-lg"
+                    />
                   </div>
                   <motion.div
                     className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-emerald-400 flex items-center justify-center shadow-lg"
