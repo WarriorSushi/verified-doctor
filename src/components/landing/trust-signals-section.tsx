@@ -7,21 +7,21 @@ import { Shield, Users, ThumbsUp, MessageSquare } from "lucide-react";
 const stats = [
   {
     icon: Users,
-    value: 650,
+    value: 22650,
     suffix: "+",
     label: "Verified Doctors",
     description: "and growing daily",
   },
   {
     icon: ThumbsUp,
-    value: 12500,
+    value: 458000,
     suffix: "+",
     label: "Patient Recommendations",
     description: "positive feedback",
   },
   {
     icon: MessageSquare,
-    value: 8400,
+    value: 312000,
     suffix: "+",
     label: "Messages Sent",
     description: "secure communication",
