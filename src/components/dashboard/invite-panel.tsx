@@ -46,7 +46,23 @@ export function InvitePanel({ doctorName, currentConnectionCount }: InvitePanelP
 
       setInviteUrl(data.inviteUrl);
       if (withEmail) {
-        toast.success(`Invite sent to ${email}`);
+        // Check if email was actually sent successfully
+        if (data.emailSent) {
+          toast.success(`Invite sent to ${email}`);
+        } else if (data.emailError) {
+          // Email failed - show error but invite link still works
+          toast.warning(`Invite created but email failed: ${data.emailError}. Share the link manually.`, {
+            duration: 5000,
+          });
+          // Copy link to clipboard as fallback
+          await navigator.clipboard.writeText(data.inviteUrl);
+          toast.info("Invite link copied to clipboard!");
+        } else {
+          // Email not configured
+          toast.warning("Email not configured. Share the link manually.");
+          await navigator.clipboard.writeText(data.inviteUrl);
+          toast.info("Invite link copied to clipboard!");
+        }
         setEmail("");
       }
     } catch (err) {

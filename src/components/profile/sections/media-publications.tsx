@@ -1,6 +1,7 @@
 "use client";
 
-import { Newspaper, ExternalLink } from "lucide-react";
+import { useState } from "react";
+import { Newspaper, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 
 interface MediaItem {
   title: string;
@@ -17,11 +18,19 @@ interface MediaPublicationsProps {
   };
 }
 
+const MAX_VISIBLE_ITEMS = 3;
+
 export function MediaPublications({
   items,
   themeColors,
 }: MediaPublicationsProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   if (!items || items.length === 0) return null;
+
+  const hasMore = items.length > MAX_VISIBLE_ITEMS;
+  const displayItems = isExpanded ? items : items.slice(0, MAX_VISIBLE_ITEMS);
+  const hiddenCount = items.length - MAX_VISIBLE_ITEMS;
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
@@ -36,7 +45,7 @@ export function MediaPublications({
       </div>
 
       <div className="space-y-3">
-        {items.map((item, index) => (
+        {displayItems.map((item, index) => (
           <div
             key={index}
             className="p-3 rounded-xl border border-slate-100 bg-slate-50/50"
@@ -64,6 +73,20 @@ export function MediaPublications({
           </div>
         ))}
       </div>
+
+      {hasMore && (
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="mt-3 text-sm font-medium inline-flex items-center gap-1 transition-colors"
+          style={{ color: themeColors.primary }}
+        >
+          {isExpanded ? (
+            <>Show less <ChevronUp className="w-4 h-4" /></>
+          ) : (
+            <>Show {hiddenCount} more <ChevronDown className="w-4 h-4" /></>
+          )}
+        </button>
+      )}
     </div>
   );
 }

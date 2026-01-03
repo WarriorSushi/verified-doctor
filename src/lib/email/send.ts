@@ -36,8 +36,12 @@ export async function sendEmail({
   // Check if API key is configured
   if (!process.env.RESEND_API_KEY) {
     console.warn("[email] RESEND_API_KEY not configured, skipping email send");
-    return { success: false, error: "Email not configured" };
+    return { success: false, error: "Email service not configured. Please set RESEND_API_KEY." };
   }
+
+  // Log sender info for debugging
+  console.log(`[email] Attempting to send from: ${FROM_EMAIL} to: ${to}`);
+  console.log(`[email] Environment: ${process.env.NODE_ENV || "development"}`);
 
   try {
     const { data, error } = await resend.emails.send({
@@ -50,17 +54,24 @@ export async function sendEmail({
     });
 
     if (error) {
-      console.error("[email] Resend error:", error);
-      return { success: false, error: error.message };
+      console.error("[email] Resend API error:", JSON.stringify(error, null, 2));
+      // Provide more helpful error messages
+      let errorMessage = error.message;
+      if (error.message?.includes("domain")) {
+        errorMessage = "Email domain not verified. Verify verified.doctor in Resend dashboard.";
+      } else if (error.message?.includes("not allowed")) {
+        errorMessage = "Sender email not authorized. Check Resend domain settings.";
+      }
+      return { success: false, error: errorMessage };
     }
 
-    console.log(`[email] Sent to ${to}: ${subject} (ID: ${data?.id})`);
+    console.log(`[email] Successfully sent to ${to}: ${subject} (ID: ${data?.id})`);
     return { success: true, messageId: data?.id };
   } catch (error) {
-    console.error("[email] Send error:", error);
+    console.error("[email] Send exception:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: error instanceof Error ? error.message : "Unknown email error",
     };
   }
 }

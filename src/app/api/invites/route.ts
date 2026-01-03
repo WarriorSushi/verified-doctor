@@ -142,8 +142,14 @@ export async function POST(request: Request) {
 
     const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://verified.doctor"}/sign-up?invite=${inviteCode}`;
 
+    // Track email send result
+    let emailSent = false;
+    let emailError: string | undefined;
+
     // Send invite email if email was provided
     if (result.data.email) {
+      console.log(`[invites] Attempting to send invite email to: ${result.data.email}`);
+
       const emailResult = await sendInviteEmail(
         result.data.email,
         profile.full_name,
@@ -151,9 +157,12 @@ export async function POST(request: Request) {
         inviteUrl
       );
 
-      if (!emailResult.success) {
-        console.warn("Failed to send invite email:", emailResult.error);
-        // Don't fail the request, just log the error
+      if (emailResult.success) {
+        emailSent = true;
+        console.log(`[invites] Successfully sent invite email to: ${result.data.email}`);
+      } else {
+        emailError = emailResult.error;
+        console.error(`[invites] Failed to send invite email to ${result.data.email}:`, emailResult.error);
       }
     }
 
@@ -164,7 +173,8 @@ export async function POST(request: Request) {
         name: profile.full_name,
         handle: profile.handle,
       },
-      emailSent: !!result.data.email,
+      emailSent,
+      emailError,
       expiresAt: expiresAt.toISOString(),
     });
   } catch (error) {
