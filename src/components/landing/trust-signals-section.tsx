@@ -83,7 +83,7 @@ function AnimatedCounter({ value, suffix }: { value: number; suffix: string }) {
     return () => clearInterval(timer);
   }, [isVisible, value]);
 
-  const displayValue = value % 1 !== 0 ? count.toFixed(1) : count.toLocaleString();
+  const displayValue = value % 1 !== 0 ? count.toFixed(1) : count.toLocaleString('en-US');
 
   return (
     <span ref={ref} className="tabular-nums">
