@@ -140,7 +140,6 @@ const DOCTOR_PHOTOS = [
   "/doctors/doctor-3.webp",
   "/doctors/doctor-4.webp",
   "/doctors/doctor-5.webp",
-  "/doctors/doctor-6.webp",
 ];
 
 export function HeroSection() {
