@@ -142,18 +142,6 @@ function SignInForm() {
         </Button>
       </form>
 
-      {/* Footer */}
-      <div className="mt-6 text-center">
-        <p className="text-sm text-slate-600">
-          Don&apos;t have an account?{" "}
-          <Link
-            href={`/sign-up${claimedHandle ? `?handle=${claimedHandle}` : ""}`}
-            className="font-medium text-[#0099F7] hover:text-[#0080CC]"
-          >
-            Sign up
-          </Link>
-        </p>
-      </div>
     </motion.div>
   );
 }

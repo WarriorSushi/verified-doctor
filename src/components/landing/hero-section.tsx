@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, ArrowRight, Loader2, BadgeCheck } from "lucide-react";
+import { Check, ArrowRight, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -232,7 +232,14 @@ export function HeroSection() {
             transition={{ delay: 0.2, duration: 0.5 }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-sky-100 shadow-sm mb-8 sm:mb-10"
           >
-            <BadgeCheck className="w-5 h-5 text-sky-600" />
+            <div className="relative w-5 h-5">
+              <Image
+                src="/verified-doctor-logo.svg"
+                alt="Verified"
+                fill
+                className="object-contain"
+              />
+            </div>
             <span className="text-sm font-semibold text-slate-800">
               The Blue Checkmark for Doctors
             </span>

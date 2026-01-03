@@ -1,5 +1,61 @@
+"use client";
+
+import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { Suspense } from "react";
+
+function AuthTabs() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isSignUp = pathname === "/sign-up";
+
+  // Preserve query params (handle, invite, redirect)
+  const queryString = searchParams.toString();
+  const queryPart = queryString ? `?${queryString}` : "";
+
+  return (
+    <div className="flex bg-slate-100/80 rounded-xl p-1 mb-6">
+      <Link
+        href={`/sign-up${queryPart}`}
+        className={`
+          flex-1 py-2.5 px-4 rounded-lg text-sm font-medium text-center transition-all duration-200
+          ${isSignUp
+            ? "bg-white text-slate-900 shadow-sm"
+            : "text-slate-500 hover:text-slate-700"
+          }
+        `}
+      >
+        Sign Up
+      </Link>
+      <Link
+        href={`/sign-in${queryPart}`}
+        className={`
+          flex-1 py-2.5 px-4 rounded-lg text-sm font-medium text-center transition-all duration-200
+          ${!isSignUp
+            ? "bg-white text-slate-900 shadow-sm"
+            : "text-slate-500 hover:text-slate-700"
+          }
+        `}
+      >
+        Sign In
+      </Link>
+    </div>
+  );
+}
+
+function AuthTabsFallback() {
+  return (
+    <div className="flex bg-slate-100/80 rounded-xl p-1 mb-6">
+      <div className="flex-1 py-2.5 px-4 rounded-lg bg-white shadow-sm">
+        <div className="h-4 bg-slate-200 rounded animate-pulse w-16 mx-auto" />
+      </div>
+      <div className="flex-1 py-2.5 px-4 rounded-lg">
+        <div className="h-4 bg-slate-200 rounded animate-pulse w-16 mx-auto" />
+      </div>
+    </div>
+  );
+}
 
 export default function AuthLayout({
   children,
@@ -36,8 +92,11 @@ export default function AuthLayout({
           </span>
         </Link>
 
-        {/* Auth card */}
+        {/* Auth card with tabs */}
         <div className="w-full max-w-md">
+          <Suspense fallback={<AuthTabsFallback />}>
+            <AuthTabs />
+          </Suspense>
           {children}
         </div>
       </div>

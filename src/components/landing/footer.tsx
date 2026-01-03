@@ -62,6 +62,27 @@ export function Footer() {
           <p className="text-slate-500 text-sm">
             &copy; {currentYear} Verified.Doctor. All rights reserved.
           </p>
+
+          {/* Parent Company Attribution */}
+          <div className="mt-6 flex items-center gap-2 text-slate-600">
+            <span className="text-xs">A unit of</span>
+            <Link
+              href="https://altcorp.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 opacity-70 hover:opacity-100 transition-opacity duration-200"
+            >
+              <div className="relative w-4 h-4">
+                <Image
+                  src="/Altcorp.svg"
+                  alt="AltCorp"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <span className="text-xs font-medium">AltCorp</span>
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
