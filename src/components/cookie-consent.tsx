@@ -51,44 +51,38 @@ export function CookieConsent() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6"
+          className="fixed bottom-0 left-0 right-0 z-50 p-3 sm:p-4"
         >
-          <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl shadow-slate-900/10 border border-slate-200 overflow-hidden">
-            <div className="p-4 sm:p-6">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center">
-                  <Cookie className="w-5 h-5 text-sky-600" />
+          <div className="max-w-2xl mx-auto bg-white rounded-xl sm:rounded-2xl shadow-2xl shadow-slate-900/10 border border-slate-200 overflow-hidden">
+            <div className="p-3 sm:p-4">
+              <div className="flex items-start gap-3">
+                <div className="hidden sm:flex flex-shrink-0 w-9 h-9 rounded-full bg-sky-100 items-center justify-center">
+                  <Cookie className="w-4 h-4 text-sky-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-semibold text-slate-900 mb-1">
-                    We use cookies
-                  </h3>
-                  <p className="text-sm text-slate-600 mb-4">
-                    We use cookies and similar technologies to enhance your experience, analyze site usage, and assist in our marketing efforts. By clicking &quot;Accept All&quot;, you consent to our use of cookies as described in our{" "}
+                  <p className="text-sm text-slate-600 mb-3">
+                    <span className="sm:hidden">We use cookies. </span>
+                    <span className="hidden sm:inline">We use cookies to improve your experience. </span>
                     <Link href="/privacy" className="text-sky-600 hover:underline">
-                      Privacy Policy
+                      Learn more
                     </Link>
-                    .
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
                     <Button
                       onClick={acceptAll}
-                      className="bg-sky-600 hover:bg-sky-700 text-white"
+                      size="sm"
+                      className="bg-sky-600 hover:bg-sky-700 text-white text-xs sm:text-sm"
                     >
-                      Accept All
+                      Accept
                     </Button>
                     <Button
                       onClick={acceptEssential}
                       variant="outline"
-                      className="border-slate-300"
+                      size="sm"
+                      className="border-slate-300 text-xs sm:text-sm"
                     >
-                      Essential Only
+                      Decline
                     </Button>
-                    <Link href="/privacy#cookies">
-                      <Button variant="ghost" className="text-slate-600">
-                        Learn More
-                      </Button>
-                    </Link>
                   </div>
                 </div>
                 <button
@@ -96,7 +90,7 @@ export function CookieConsent() {
                   className="flex-shrink-0 p-1 text-slate-400 hover:text-slate-600 transition-colors"
                   aria-label="Close cookie banner"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>

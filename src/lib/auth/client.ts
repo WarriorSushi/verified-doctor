@@ -28,14 +28,20 @@ export async function signInWithGoogle(redirectTo?: string) {
 
 /**
  * Sign up with email and password (client-side).
+ * After email confirmation, user is redirected to /confirm page.
  */
 export async function signUp(email: string, password: string, metadata?: { full_name?: string }) {
   const supabase = createBrowserClient();
+
+  // Redirect to confirm page after email verification
+  const confirmUrl = new URL("/confirm", window.location.origin);
+
   return supabase.auth.signUp({
     email,
     password,
     options: {
       data: metadata,
+      emailRedirectTo: confirmUrl.toString(),
     },
   });
 }

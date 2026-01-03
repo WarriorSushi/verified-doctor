@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { CookieConsent } from "@/components/cookie-consent";
+import { AuthHandler } from "@/components/auth/auth-handler";
 import "./globals.css";
 
 const inter = Inter({
@@ -227,6 +229,9 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
+        <Suspense fallback={null}>
+          <AuthHandler />
+        </Suspense>
         {children}
         <Toaster />
         <CookieConsent />

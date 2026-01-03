@@ -36,7 +36,7 @@ export function UserMenu({ fullName, handle, profilePhotoUrl }: UserMenuProps) {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      const response = await fetch("/api/test-auth/logout", {
+      const response = await fetch("/api/auth/logout", {
         method: "POST",
       });
 
