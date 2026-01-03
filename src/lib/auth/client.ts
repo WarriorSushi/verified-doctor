@@ -6,6 +6,27 @@ import { createClient as createBrowserClient } from "@/lib/supabase/client";
  */
 
 /**
+ * Sign in with Google OAuth (client-side).
+ * Redirects to Google, then back to your app.
+ */
+export async function signInWithGoogle(redirectTo?: string) {
+  const supabase = createBrowserClient();
+
+  // Determine where to redirect after auth
+  const callbackUrl = new URL("/auth/callback", window.location.origin);
+  if (redirectTo) {
+    callbackUrl.searchParams.set("redirect", redirectTo);
+  }
+
+  return supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: callbackUrl.toString(),
+    },
+  });
+}
+
+/**
  * Sign up with email and password (client-side).
  */
 export async function signUp(email: string, password: string, metadata?: { full_name?: string }) {
