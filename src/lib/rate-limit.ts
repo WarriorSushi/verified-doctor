@@ -169,3 +169,51 @@ export function formatRetryAfter(seconds: number): string {
   const minutes = Math.ceil(seconds / 60);
   return `${minutes} minute${minutes !== 1 ? "s" : ""}`;
 }
+
+// Simple rate limit function for generic use cases
+// Returns success: true if under limit, false if rate limited
+export async function rateLimit(
+  identifier: string,
+  maxRequests: number,
+  windowSeconds: number
+): Promise<RateLimitResult> {
+  const redisClient = getRedis();
+
+  if (!redisClient) {
+    // If Redis not configured, allow all requests
+    return {
+      success: true,
+      limit: maxRequests,
+      remaining: maxRequests,
+      reset: Date.now() + windowSeconds * 1000,
+    };
+  }
+
+  try {
+    const limiter = new Ratelimit({
+      redis: redisClient,
+      limiter: Ratelimit.slidingWindow(maxRequests, `${windowSeconds}s`),
+      prefix: `ratelimit:generic`,
+      analytics: false,
+    });
+
+    const result = await limiter.limit(identifier);
+
+    return {
+      success: result.success,
+      limit: result.limit,
+      remaining: result.remaining,
+      reset: result.reset,
+      retryAfter: result.success ? undefined : Math.ceil((result.reset - Date.now()) / 1000),
+    };
+  } catch (error) {
+    console.error("[rate-limit] Error:", error);
+    // Graceful degradation - allow request on error
+    return {
+      success: true,
+      limit: maxRequests,
+      remaining: maxRequests,
+      reset: Date.now() + windowSeconds * 1000,
+    };
+  }
+}

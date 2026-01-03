@@ -2,6 +2,43 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAuth } from "@/lib/auth";
 
+// SECURITY: Validate magic bytes to ensure file content matches declared MIME type
+function validateImageMagicBytes(bytes: Uint8Array, mimeType: string): boolean {
+  if (bytes.length < 12) return false;
+
+  switch (mimeType) {
+    case "image/jpeg":
+      // JPEG starts with FF D8 FF
+      return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+    case "image/png":
+      // PNG starts with 89 50 4E 47 0D 0A 1A 0A
+      return (
+        bytes[0] === 0x89 &&
+        bytes[1] === 0x50 &&
+        bytes[2] === 0x4e &&
+        bytes[3] === 0x47 &&
+        bytes[4] === 0x0d &&
+        bytes[5] === 0x0a &&
+        bytes[6] === 0x1a &&
+        bytes[7] === 0x0a
+      );
+    case "image/webp":
+      // WebP starts with RIFF....WEBP
+      return (
+        bytes[0] === 0x52 && // R
+        bytes[1] === 0x49 && // I
+        bytes[2] === 0x46 && // F
+        bytes[3] === 0x46 && // F
+        bytes[8] === 0x57 && // W
+        bytes[9] === 0x45 && // E
+        bytes[10] === 0x42 && // B
+        bytes[11] === 0x50    // P
+      );
+    default:
+      return false;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await getAuth();
@@ -11,17 +48,42 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
-    const type = formData.get("type") as string || "gallery";
+    const typeParam = formData.get("type") as string || "gallery";
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Validate file type
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowedTypes.includes(file.type)) {
+    // SECURITY: Whitelist allowed upload types to prevent path traversal
+    const ALLOWED_UPLOAD_TYPES: Record<string, { bucket: string; folder: string }> = {
+      gallery: { bucket: "clinic-gallery", folder: "gallery" },
+      profile: { bucket: "profile-photos", folder: "profile" },
+    };
+
+    const uploadConfig = ALLOWED_UPLOAD_TYPES[typeParam];
+    if (!uploadConfig) {
+      return NextResponse.json(
+        { error: "Invalid upload type" },
+        { status: 400 }
+      );
+    }
+
+    // Validate file type (MIME type)
+    const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedMimeTypes.includes(file.type)) {
       return NextResponse.json(
         { error: "Invalid file type. Only JPEG, PNG, and WebP are allowed." },
+        { status: 400 }
+      );
+    }
+
+    // SECURITY: Validate magic bytes to ensure file is actually an image
+    const arrayBuffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    const isValidImage = validateImageMagicBytes(bytes, file.type);
+    if (!isValidImage) {
+      return NextResponse.json(
+        { error: "Invalid file content. File does not match declared type." },
         { status: 400 }
       );
     }
@@ -35,19 +97,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Determine bucket based on type
-    const bucket = type === "gallery" ? "clinic-gallery" : "profile-photos";
+    // Use validated bucket from whitelist
+    const bucket = uploadConfig.bucket;
 
-    // Generate unique filename
+    // Generate safe filename with extension from MIME type
     const timestamp = Date.now();
-    const ext = file.type.split("/")[1];
-    const filename = `${userId}/${type}-${timestamp}.${ext}`;
+    const extMap: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+    };
+    const ext = extMap[file.type] || "jpg";
+    // SECURITY: Use folder from whitelist, not user input
+    const filename = `${userId}/${uploadConfig.folder}-${timestamp}.${ext}`;
 
     // Upload to Supabase Storage
     const supabase = await createClient();
 
-    // Convert File to ArrayBuffer then to Buffer for upload
-    const arrayBuffer = await file.arrayBuffer();
+    // Convert already-read ArrayBuffer to Buffer for upload
     const buffer = Buffer.from(arrayBuffer);
 
     const { data, error } = await supabase.storage

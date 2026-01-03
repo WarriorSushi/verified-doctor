@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, ArrowRight, Loader2, Shield } from "lucide-react";
+import { Check, ArrowRight, Loader2, BadgeCheck } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,33 +59,33 @@ function useTypewriter(names: string[], isActive: boolean) {
 
 // Hook for animated doctor count with daily reset
 function useDoctorCount() {
-  const [count, setCount] = useState(653);
+  const [count, setCount] = useState(47);
 
   useEffect(() => {
-    // Check for daily reset
+    // Check for daily reset - this is "today's" count
     const today = new Date().toDateString();
     const storedDate = localStorage.getItem("vd_count_date");
-    const storedCount = localStorage.getItem("vd_count");
+    const storedCount = localStorage.getItem("vd_count_today");
 
     if (storedDate === today && storedCount) {
       setCount(parseInt(storedCount, 10));
     } else {
-      // New day - reset to random value between 650-840
-      const newCount = Math.floor(Math.random() * 190) + 650;
+      // New day - reset to random value between 35-65
+      const newCount = Math.floor(Math.random() * 30) + 35;
       setCount(newCount);
       localStorage.setItem("vd_count_date", today);
-      localStorage.setItem("vd_count", String(newCount));
+      localStorage.setItem("vd_count_today", String(newCount));
     }
 
-    // Increment randomly every 2-3 seconds
+    // Increment randomly every 8-15 seconds
     const interval = setInterval(() => {
       setCount((prev) => {
-        const increment = Math.floor(Math.random() * 3) + 1;
+        const increment = 1;
         const newCount = prev + increment;
-        localStorage.setItem("vd_count", String(newCount));
+        localStorage.setItem("vd_count_today", String(newCount));
         return newCount;
       });
-    }, 2000 + Math.random() * 1000);
+    }, 8000 + Math.random() * 7000);
 
     return () => clearInterval(interval);
   }, []);
@@ -93,14 +93,14 @@ function useDoctorCount() {
   return count;
 }
 
-// Stock doctor photos
+// Stock doctor photos - these will be in /public/doctors/
 const DOCTOR_PHOTOS = [
-  "/doctors/doctor-1.jpg",
-  "/doctors/doctor-2.jpg",
-  "/doctors/doctor-3.jpg",
-  "/doctors/doctor-4.jpg",
-  "/doctors/doctor-5.jpg",
-  "/doctors/doctor-6.jpg",
+  "/doctors/doctor-1.webp",
+  "/doctors/doctor-2.webp",
+  "/doctors/doctor-3.webp",
+  "/doctors/doctor-4.webp",
+  "/doctors/doctor-5.webp",
+  "/doctors/doctor-6.webp",
 ];
 
 export function HeroSection() {
@@ -186,16 +186,16 @@ export function HeroSection() {
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           className="text-center"
         >
-          {/* Trust badge */}
+          {/* Trust badge - Updated copy */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.5 }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-sky-100 shadow-sm mb-8 sm:mb-10"
           >
-            <Shield className="w-4 h-4 text-sky-600" />
-            <span className="text-sm font-medium text-slate-700">
-              Trusted by <span className="text-sky-600 font-semibold">{doctorCount.toLocaleString()}+</span> medical professionals
+            <BadgeCheck className="w-5 h-5 text-sky-600" />
+            <span className="text-sm font-semibold text-slate-800">
+              The Blue Checkmark for Doctors
             </span>
           </motion.div>
 
@@ -224,7 +224,7 @@ export function HeroSection() {
             <span className="hidden sm:inline"> Stand out with a professional presence that patients can trust.</span>
           </motion.p>
 
-          {/* Demo URL Preview - THE KEY MOMENT */}
+          {/* Demo URL Preview - Softer, more elegant design */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -234,14 +234,14 @@ export function HeroSection() {
             <p className="text-sm sm:text-base text-slate-500 mb-3 font-medium">
               Here&apos;s how your personal verified domain will appear
             </p>
-            <div className="inline-flex items-center justify-center bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-xl px-5 sm:px-8 py-3 sm:py-4 shadow-xl shadow-slate-900/20">
-              <span className="text-slate-400 text-lg sm:text-2xl font-mono">verified.doctor/</span>
-              <span className="text-white text-lg sm:text-2xl font-mono font-semibold min-w-[80px] sm:min-w-[120px] text-left">
+            <div className="inline-flex items-center justify-center bg-white rounded-2xl px-6 sm:px-10 py-4 sm:py-5 shadow-lg shadow-slate-200/60 border border-slate-100">
+              <span className="text-slate-400 text-lg sm:text-2xl font-mono tracking-tight">verified.doctor/</span>
+              <span className="text-sky-600 text-lg sm:text-2xl font-mono font-bold tracking-tight min-w-[90px] sm:min-w-[140px] text-left">
                 {demoName}
                 <motion.span
                   animate={{ opacity: [1, 0] }}
-                  transition={{ duration: 0.6, repeat: Infinity, repeatType: "reverse" }}
-                  className="inline-block w-[2px] h-5 sm:h-6 bg-sky-400 ml-0.5 align-middle"
+                  transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
+                  className="inline-block w-[2px] h-5 sm:h-7 bg-sky-500 ml-0.5 align-middle rounded-full"
                 />
               </span>
             </div>
@@ -368,8 +368,11 @@ export function HeroSection() {
                     className="object-cover"
                     sizes="48px"
                     onError={(e) => {
-                      // Fallback to gradient if image doesn't exist
-                      e.currentTarget.style.display = 'none';
+                      // Fallback to initials if image doesn't exist
+                      const target = e.currentTarget.parentElement;
+                      if (target) {
+                        target.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-sky-400 to-sky-600 text-white font-bold text-sm">D${i + 1}</div>`;
+                      }
                     }}
                   />
                 </motion.div>
@@ -380,11 +383,11 @@ export function HeroSection() {
                 transition={{ delay: 1.5, duration: 0.4 }}
                 className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-[3px] border-white shadow-md bg-gradient-to-br from-sky-500 to-sky-600 flex items-center justify-center"
               >
-                <span className="text-white text-xs sm:text-sm font-bold">+{Math.floor(doctorCount / 100) * 100}</span>
+                <span className="text-white text-xs sm:text-sm font-bold">+99</span>
               </motion.div>
             </div>
 
-            {/* Counter text */}
+            {/* Counter text - Updated */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -398,9 +401,9 @@ export function HeroSection() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="text-sky-600 tabular-nums"
                 >
-                  {doctorCount.toLocaleString()}
+                  {doctorCount}
                 </motion.span>
-                {" "}doctors have claimed their domain
+                {" "}doctors claimed their domain today
               </p>
               <p className="text-slate-500 text-sm mt-0.5">Join the verified medical professional network</p>
             </motion.div>

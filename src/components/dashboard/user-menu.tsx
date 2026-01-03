@@ -3,13 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { LogOut, User, Settings, ChevronDown, HelpCircle } from "lucide-react";
+import { LogOut, User, Settings, ChevronDown, HelpCircle, FileText, Shield, Mail } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
@@ -98,6 +101,35 @@ export function UserMenu({ fullName, handle, profilePhotoUrl }: UserMenuProps) {
           <HelpCircle className="w-4 h-4 mr-2" />
           Help & Support
         </DropdownMenuItem>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger className="cursor-pointer">
+            <FileText className="w-4 h-4 mr-2" />
+            Policies
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <DropdownMenuItem
+              onClick={() => router.push("/terms")}
+              className="cursor-pointer"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Terms of Service
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => router.push("/privacy")}
+              className="cursor-pointer"
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              Privacy Policy
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => router.push("/contact")}
+              className="cursor-pointer"
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              Contact Us
+            </DropdownMenuItem>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleLogout}

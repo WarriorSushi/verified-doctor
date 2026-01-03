@@ -336,6 +336,48 @@ export type Database = {
           },
         ]
       }
+      contact_messages: {
+        Row: {
+          id: string
+          name: string
+          email: string
+          subject: string | null
+          message: string
+          inquiry_type: string | null
+          status: string | null
+          ip_address: string | null
+          admin_response: string | null
+          responded_at: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          email: string
+          subject?: string | null
+          message: string
+          inquiry_type?: string | null
+          status?: string | null
+          ip_address?: string | null
+          admin_response?: string | null
+          responded_at?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          email?: string
+          subject?: string | null
+          message?: string
+          inquiry_type?: string | null
+          status?: string | null
+          ip_address?: string | null
+          admin_response?: string | null
+          responded_at?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
       support_messages: {
         Row: {
           id: string
