@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getAuth } from "@/lib/auth";
@@ -112,10 +113,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     const supabase = await createClient();
 
-    // Verify ownership
+    // Verify ownership and get handle for cache revalidation
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("id, user_id")
+      .select("id, user_id, handle")
       .eq("id", id)
       .single();
 
@@ -183,6 +184,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         { status: 500 }
       );
     }
+
+    // Revalidate the public profile page cache so changes appear immediately
+    revalidatePath(`/${profile.handle}`);
 
     return NextResponse.json({ success: true });
   } catch (error) {
