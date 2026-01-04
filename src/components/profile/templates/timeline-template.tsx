@@ -92,10 +92,32 @@ interface InvitedBy {
   handle: string;
 }
 
+interface ThemeConfig {
+  id: string;
+  name: string;
+  description: string;
+  colors: {
+    background: string;
+    backgroundAlt: string;
+    primary: string;
+    primaryHover: string;
+    accent: string;
+    text: string;
+    textMuted: string;
+    textOnPrimary: string;
+    card: string;
+    cardBorder: string;
+    gradientFrom?: string;
+    gradientTo?: string;
+    isDark?: boolean;
+  };
+}
+
 interface TimelineTemplateProps {
   profile: Profile;
   connectedDoctors: ConnectedDoctor[];
   invitedBy?: InvitedBy | null;
+  theme: ThemeConfig;
 }
 
 // Helper to check section visibility
@@ -104,12 +126,6 @@ function isSectionVisible(visibility: unknown, key: string): boolean {
   const v = visibility as Record<string, boolean>;
   return v[key] === true;
 }
-
-// Theme colors for timeline template - warm editorial palette
-const themeColors = {
-  primary: "#c2410c", // terracotta
-  accent: "#fbbf24", // warm gold
-};
 
 // Timeline milestone component
 function TimelineMilestone({
@@ -163,7 +179,9 @@ function TimelineMilestone({
   );
 }
 
-export function TimelineTemplate({ profile, connectedDoctors, invitedBy }: TimelineTemplateProps) {
+export function TimelineTemplate({ profile, connectedDoctors, invitedBy, theme }: TimelineTemplateProps) {
+  const colors = theme.colors;
+  const themeColors = { primary: colors.primary, accent: colors.accent };
   const [showFullBio, setShowFullBio] = useState(false);
   const recommendationText = formatRecommendationCount(profile.recommendation_count || 0);
   const connectionText = formatConnectionCount(profile.connection_count || 0);

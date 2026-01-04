@@ -5,13 +5,10 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import {
   ClassicTemplate,
-  OceanTemplate,
-  SageTemplate,
-  WarmTemplate,
-  ExecutiveTemplate,
   HeroTemplate,
   TimelineTemplate,
 } from "@/components/profile/templates";
+import { getTheme } from "@/lib/theme-config";
 import { PauseCircle } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -41,6 +38,8 @@ interface ExtendedProfile {
   recommendation_count: number;
   connection_count: number;
   profile_template: string | null;
+  profile_layout: string | null;
+  profile_theme: string | null;
   is_frozen: boolean | null;
   // Profile builder fields
   video_introduction_url: string | null;
@@ -349,8 +348,10 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   // Generate JSON-LD structured data
   const jsonLd = generateDoctorJsonLd(extendedProfile);
 
-  // Route to the correct template with JSON-LD
-  const template = extendedProfile.profile_template || "classic";
+  // Get layout and theme - use new system if available, fallback to old template field
+  const layout = extendedProfile.profile_layout || "classic";
+  const themeId = extendedProfile.profile_theme || "blue";
+  const theme = getTheme(themeId);
 
   const TemplateWithJsonLd = ({ children }: { children: React.ReactNode }) => (
     <>
@@ -362,48 +363,25 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     </>
   );
 
-  switch (template) {
-    case "ocean":
-      return (
-        <TemplateWithJsonLd>
-          <OceanTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />
-        </TemplateWithJsonLd>
-      );
-    case "sage":
-      return (
-        <TemplateWithJsonLd>
-          <SageTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />
-        </TemplateWithJsonLd>
-      );
-    case "warm":
-      return (
-        <TemplateWithJsonLd>
-          <WarmTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />
-        </TemplateWithJsonLd>
-      );
-    case "executive":
-      return (
-        <TemplateWithJsonLd>
-          <ExecutiveTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />
-        </TemplateWithJsonLd>
-      );
+  // Route to the correct layout template, passing the theme
+  switch (layout) {
     case "hero":
       return (
         <TemplateWithJsonLd>
-          <HeroTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />
+          <HeroTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} theme={theme} />
         </TemplateWithJsonLd>
       );
     case "timeline":
       return (
         <TemplateWithJsonLd>
-          <TimelineTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />
+          <TimelineTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} theme={theme} />
         </TemplateWithJsonLd>
       );
     case "classic":
     default:
       return (
         <TemplateWithJsonLd>
-          <ClassicTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />
+          <ClassicTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} theme={theme} />
         </TemplateWithJsonLd>
       );
   }

@@ -38,6 +38,7 @@ import {
   MediaPublications,
   ClinicGallery,
 } from "../sections";
+import type { ThemeConfig } from "@/lib/theme-config";
 
 interface Profile {
   id: string;
@@ -95,6 +96,7 @@ interface ClassicTemplateProps {
   profile: Profile;
   connectedDoctors: ConnectedDoctor[];
   invitedBy?: InvitedBy | null;
+  theme: ThemeConfig;
 }
 
 // Helper to check section visibility - sections are OFF by default unless explicitly set to true
@@ -104,13 +106,9 @@ function isSectionVisible(visibility: unknown, key: string): boolean {
   return v[key] === true;
 }
 
-// Theme colors for classic template
-const themeColors = {
-  primary: "#0099F7",
-  accent: "#A4FDFF",
-};
-
-export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: ClassicTemplateProps) {
+export function ClassicTemplate({ profile, connectedDoctors, invitedBy, theme }: ClassicTemplateProps) {
+  // Extract colors from theme for use throughout the component
+  const colors = theme.colors;
   const [showFullBio, setShowFullBio] = useState(false);
   const recommendationText = formatRecommendationCount(profile.recommendation_count || 0);
   const connectionText = formatConnectionCount(profile.connection_count || 0);
@@ -124,19 +122,22 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
     : profile.bio;
   const showBioToggle = profile.bio && profile.bio.length > 150;
 
+  // Theme colors for section components
+  const themeColors = { primary: colors.primary, accent: colors.accent };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-slate-50/50 to-white">
+    <div className="min-h-screen" style={{ background: `linear-gradient(to bottom, ${colors.background}, ${colors.backgroundAlt}, ${colors.background})` }}>
       {/* Analytics: Track profile view */}
       <ProfileViewTracker profileId={profile.id} />
 
       {/* Subtle gradient orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#0099F7]/[0.03] rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-0 w-[500px] h-[500px] bg-[#A4FDFF]/[0.05] rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full blur-3xl" style={{ backgroundColor: `${colors.primary}08` }} />
+        <div className="absolute bottom-1/4 right-0 w-[500px] h-[500px] rounded-full blur-3xl" style={{ backgroundColor: `${colors.accent}0D` }} />
       </div>
 
       {/* Navbar */}
-      <nav className="relative z-20 px-4 sm:px-6 py-3 border-b border-slate-100 bg-white/80 backdrop-blur-sm">
+      <nav className="relative z-20 px-4 sm:px-6 py-3 border-b backdrop-blur-sm" style={{ backgroundColor: `${colors.card}CC`, borderColor: colors.cardBorder }}>
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
             <div className="relative w-6 h-6 sm:w-7 sm:h-7 transition-transform group-hover:scale-105">
@@ -147,14 +148,15 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
                 className="object-contain"
               />
             </div>
-            <span className="text-sm sm:text-base font-semibold text-slate-800">
-              verified<span className="text-[#0099F7]">.doctor</span>
+            <span className="text-sm sm:text-base font-semibold" style={{ color: colors.text }}>
+              verified<span style={{ color: colors.primary }}>.doctor</span>
             </span>
           </Link>
 
           <Link
             href="/"
-            className="text-xs sm:text-sm font-medium text-[#0099F7] hover:text-[#0080CC] transition-colors"
+            className="text-xs sm:text-sm font-medium transition-colors"
+            style={{ color: colors.primary }}
           >
             Claim yours →
           </Link>
@@ -175,7 +177,7 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
             {/* Avatar */}
             <div className="flex justify-center sm:justify-start">
               <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#0099F7] to-[#0080CC] rounded-full blur-lg opacity-20" />
+                <div className="absolute inset-0 rounded-full blur-lg opacity-20" style={{ background: `linear-gradient(to bottom right, ${colors.primary}, ${colors.primaryHover})` }} />
                 {profile.profile_photo_url ? (
                   <Image
                     src={profile.profile_photo_url}
@@ -186,7 +188,7 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
                     className="object-cover rounded-full border-3 border-white shadow-lg relative z-10"
                   />
                 ) : (
-                  <div className="relative z-10 w-full h-full rounded-full bg-gradient-to-br from-[#0099F7] to-[#0080CC] flex items-center justify-center text-white text-3xl sm:text-4xl font-bold border-3 border-white shadow-lg">
+                  <div className="relative z-10 w-full h-full rounded-full flex items-center justify-center text-3xl sm:text-4xl font-bold border-3 border-white shadow-lg" style={{ background: `linear-gradient(to bottom right, ${colors.primary}, ${colors.primaryHover})`, color: colors.textOnPrimary }}>
                     {profile.full_name
                       .split(" ")
                       .map((n) => n[0])
@@ -228,7 +230,7 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
               )}
 
               {/* Specialty */}
-              <p className="text-[#0099F7] font-medium text-sm sm:text-base mb-2">{profile.specialty}</p>
+              <p className="font-medium text-sm sm:text-base mb-2" style={{ color: colors.primary }}>{profile.specialty}</p>
 
               {/* Quick Stats - Inline */}
               <div className="flex flex-wrap justify-center sm:justify-start gap-x-4 gap-y-1 text-xs sm:text-sm text-slate-600">
@@ -256,17 +258,17 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
               {(recommendationText || connectionText) && (
                 <div className="flex justify-center sm:justify-start gap-4 mt-3">
                   {recommendationText && (
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#0099F7]/10 rounded-full">
-                      <ThumbsUp className="w-3.5 h-3.5 text-[#0099F7]" />
-                      <span className="text-xs font-semibold text-[#0099F7]">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ backgroundColor: `${colors.primary}1A` }}>
+                      <ThumbsUp className="w-3.5 h-3.5" style={{ color: colors.primary }} />
+                      <span className="text-xs font-semibold" style={{ color: colors.primary }}>
                         {profile.recommendation_count} {profile.recommendation_count === 1 ? "recommendation" : "recommendations"}
                       </span>
                     </div>
                   )}
                   {connectionText && (
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 rounded-full">
-                      <Users className="w-3.5 h-3.5 text-slate-600" />
-                      <span className="text-xs font-semibold text-slate-600">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ backgroundColor: colors.backgroundAlt }}>
+                      <Users className="w-3.5 h-3.5" style={{ color: colors.textMuted }} />
+                      <span className="text-xs font-semibold" style={{ color: colors.textMuted }}>
                         {profile.connection_count} connected
                       </span>
                     </div>
@@ -287,12 +289,17 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
           >
             <Link
               href={`/${invitedBy.handle}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#0099F7]/10 to-[#A4FDFF]/20 border border-[#0099F7]/20 rounded-full text-xs sm:text-sm text-[#0080CC] hover:bg-[#0099F7]/15 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm transition-colors"
+              style={{
+                background: `linear-gradient(to right, ${colors.primary}1A, ${colors.accent}33)`,
+                borderColor: `${colors.primary}33`,
+                color: colors.primaryHover
+              }}
             >
               <Handshake className="w-3.5 h-3.5" />
               <span>
                 Invited by <span className="font-medium">{invitedBy.full_name}</span>
-                {invitedBy.specialty && <span className="text-[#0099F7]/70"> ({invitedBy.specialty})</span>}
+                {invitedBy.specialty && <span style={{ color: `${colors.primary}B3` }}> ({invitedBy.specialty})</span>}
               </span>
             </Link>
           </motion.div>
@@ -327,7 +334,8 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
             {showBioToggle && (
               <button
                 onClick={() => setShowFullBio(!showFullBio)}
-                className="mt-1 text-[#0099F7] text-sm font-medium inline-flex items-center gap-1 hover:text-[#0080CC]"
+                className="mt-1 text-sm font-medium inline-flex items-center gap-1"
+                style={{ color: colors.primary }}
               >
                 {showFullBio ? (
                   <>Show less <ChevronUp className="w-4 h-4" /></>
@@ -348,7 +356,12 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
             className="mb-6"
           >
             <Button
-              className="w-full bg-[#0099F7] hover:bg-[#0080CC] text-white h-11 sm:h-12 rounded-xl font-medium shadow-lg shadow-[#0099F7]/20"
+              className="w-full h-11 sm:h-12 rounded-xl font-medium shadow-lg"
+              style={{
+                backgroundColor: colors.primary,
+                color: colors.textOnPrimary,
+                boxShadow: `0 10px 15px -3px ${colors.primary}33`
+              }}
               asChild
             >
               <a
@@ -369,18 +382,19 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.25 }}
-          className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5 mb-5"
+          className="rounded-xl shadow-sm p-4 sm:p-5 mb-5"
+          style={{ backgroundColor: colors.card, border: `1px solid ${colors.cardBorder}` }}
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Location */}
             {(profile.clinic_name || profile.clinic_location) && (
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#0099F7]/10 flex items-center justify-center flex-shrink-0">
-                  <MapPin className="w-4 h-4 text-[#0099F7]" />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${colors.primary}1A` }}>
+                  <MapPin className="w-4 h-4" style={{ color: colors.primary }} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] sm:text-xs font-medium text-slate-400 uppercase tracking-wide">Location</p>
-                  <p className="text-sm text-slate-800 font-medium truncate">
+                  <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide" style={{ color: colors.textMuted }}>Location</p>
+                  <p className="text-sm font-medium truncate" style={{ color: colors.text }}>
                     {[profile.clinic_name, profile.clinic_location].filter(Boolean).join(", ")}
                   </p>
                 </div>
@@ -390,12 +404,12 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
             {/* Languages */}
             {profile.languages && (
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#0099F7]/10 flex items-center justify-center flex-shrink-0">
-                  <Globe className="w-4 h-4 text-[#0099F7]" />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${colors.primary}1A` }}>
+                  <Globe className="w-4 h-4" style={{ color: colors.primary }} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] sm:text-xs font-medium text-slate-400 uppercase tracking-wide">Languages</p>
-                  <p className="text-sm text-slate-800 font-medium">{profile.languages}</p>
+                  <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide" style={{ color: colors.textMuted }}>Languages</p>
+                  <p className="text-sm font-medium" style={{ color: colors.text }}>{profile.languages}</p>
                 </div>
               </div>
             )}
@@ -403,12 +417,12 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
             {/* Consultation Fee */}
             {profile.consultation_fee && (
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#0099F7]/10 flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-4 h-4 text-[#0099F7]" />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${colors.primary}1A` }}>
+                  <Sparkles className="w-4 h-4" style={{ color: colors.primary }} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] sm:text-xs font-medium text-slate-400 uppercase tracking-wide">Consultation</p>
-                  <p className="text-sm text-slate-800 font-medium">{profile.consultation_fee}</p>
+                  <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide" style={{ color: colors.textMuted }}>Consultation</p>
+                  <p className="text-sm font-medium" style={{ color: colors.text }}>{profile.consultation_fee}</p>
                 </div>
               </div>
             )}
@@ -416,8 +430,8 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
             {/* Registration */}
             {profile.registration_number && (
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#0099F7]/10 flex items-center justify-center flex-shrink-0">
-                  <CheckCircle2 className="w-4 h-4 text-[#0099F7]" />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${colors.primary}1A` }}>
+                  <CheckCircle2 className="w-4 h-4" style={{ color: colors.primary }} />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[10px] sm:text-xs font-medium text-slate-400 uppercase tracking-wide">Registration</p>
@@ -602,11 +616,18 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.52 }}
-          className="bg-gradient-to-br from-[#0099F7]/10 to-[#A4FDFF]/20 rounded-2xl p-5 sm:p-6 text-center border border-[#0099F7]/20 mb-6 relative overflow-hidden"
+          className="rounded-2xl p-5 sm:p-6 text-center mb-6 relative overflow-hidden"
+          style={{
+            background: `linear-gradient(to bottom right, ${colors.primary}1A, ${colors.accent}33)`,
+            border: `1px solid ${colors.primary}33`
+          }}
         >
           {/* Animated pulse background */}
           <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-[#0099F7]/5 via-[#A4FDFF]/10 to-[#0099F7]/5"
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(to right, ${colors.primary}0D, ${colors.accent}1A, ${colors.primary}0D)`
+            }}
             animate={{
               x: ["-100%", "100%"],
             }}
@@ -617,7 +638,7 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
             }}
           />
           <div className="relative z-10">
-            <p className="text-slate-700 text-base sm:text-lg font-medium mb-4">
+            <p className="text-base sm:text-lg font-medium mb-4" style={{ color: colors.text }}>
               Show your appreciation for {profile.full_name} by clicking below
             </p>
             <RecommendButton profileId={profile.id} />
@@ -632,12 +653,13 @@ export function ClassicTemplate({ profile, connectedDoctors, invitedBy }: Classi
             transition={{ duration: 0.4, delay: 0.35 }}
             className="mb-6"
           >
-            <p className="text-[10px] sm:text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Services</p>
+            <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide mb-3" style={{ color: colors.textMuted }}>Services</p>
             <div className="flex flex-wrap gap-2">
               {services.map((service, i) => (
                 <span
                   key={i}
-                  className="px-3 py-1.5 bg-white border border-slate-200 rounded-full text-xs sm:text-sm text-slate-700 font-medium shadow-sm"
+                  className="px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium shadow-sm"
+                  style={{ backgroundColor: colors.card, border: `1px solid ${colors.cardBorder}`, color: colors.text }}
                 >
                   {service}
                 </span>

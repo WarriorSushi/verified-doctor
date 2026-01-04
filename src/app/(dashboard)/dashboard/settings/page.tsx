@@ -14,11 +14,17 @@ export default async function SettingsPage() {
     redirect("/onboarding");
   }
 
-  // Ensure profile_template has a default value (cast needed until DB types are regenerated)
-  const profileData = profile as typeof profile & { profile_template?: string | null };
+  // Ensure profile fields have default values (cast needed until DB types are regenerated)
+  const profileData = profile as typeof profile & {
+    profile_template?: string | null;
+    profile_layout?: string | null;
+    profile_theme?: string | null;
+  };
   const profileWithTemplate = {
     ...profile,
     profile_template: profileData.profile_template ?? "classic",
+    profile_layout: profileData.profile_layout ?? "classic",
+    profile_theme: profileData.profile_theme ?? "blue",
   };
 
   return (

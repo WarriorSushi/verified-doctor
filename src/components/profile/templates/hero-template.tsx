@@ -92,10 +92,32 @@ interface InvitedBy {
   handle: string;
 }
 
+interface ThemeConfig {
+  id: string;
+  name: string;
+  description: string;
+  colors: {
+    background: string;
+    backgroundAlt: string;
+    primary: string;
+    primaryHover: string;
+    accent: string;
+    text: string;
+    textMuted: string;
+    textOnPrimary: string;
+    card: string;
+    cardBorder: string;
+    gradientFrom?: string;
+    gradientTo?: string;
+    isDark?: boolean;
+  };
+}
+
 interface HeroTemplateProps {
   profile: Profile;
   connectedDoctors: ConnectedDoctor[];
   invitedBy?: InvitedBy | null;
+  theme: ThemeConfig;
 }
 
 function isSectionVisible(visibility: unknown, key: string): boolean {
@@ -104,13 +126,9 @@ function isSectionVisible(visibility: unknown, key: string): boolean {
   return v[key] === true;
 }
 
-// Hero theme - Bold teal/cyan with dramatic gradients
-const themeColors = {
-  primary: "#0d9488",
-  accent: "#5eead4",
-};
-
-export function HeroTemplate({ profile, connectedDoctors, invitedBy }: HeroTemplateProps) {
+export function HeroTemplate({ profile, connectedDoctors, invitedBy, theme }: HeroTemplateProps) {
+  const colors = theme.colors;
+  const themeColors = { primary: colors.primary, accent: colors.accent };
   const [showFullBio, setShowFullBio] = useState(false);
   const recommendationText = formatRecommendationCount(profile.recommendation_count || 0);
   const connectionText = formatConnectionCount(profile.connection_count || 0);

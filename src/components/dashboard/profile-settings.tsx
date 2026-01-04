@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Loader2, Save, Check, Palette, Power, AlertTriangle, Upload, Camera } from "lucide-react";
+import { Loader2, Save, Check, Palette, Power, AlertTriangle, Upload, Camera, Layout } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import { VerificationUpload } from "./verification-upload";
 import { cn } from "@/lib/utils";
 import { uploadProfilePhoto } from "@/lib/upload";
 import { getUser } from "@/lib/auth/client";
+import { LAYOUTS, THEMES } from "@/lib/theme-config";
 
 interface Profile {
   id: string;
@@ -28,119 +29,8 @@ interface Profile {
   is_verified: boolean | null;
   verification_status: string | null;
   profile_template: string | null;
-}
-
-const TEMPLATES = [
-  {
-    id: "classic",
-    name: "Classic",
-    description: "Clean white with brand blue accents",
-    background: "#FFFFFF",
-    primary: "#0099F7",
-    accent: "#A4FDFF",
-    text: "#0F172A",
-    muted: "#64748B",
-  },
-  {
-    id: "ocean",
-    name: "Ocean",
-    description: "Soft blue professional theme",
-    background: "#F8FCFE",
-    primary: "#0077B6",
-    accent: "#90E0EF",
-    text: "#0A3D62",
-    muted: "#457B9D",
-  },
-  {
-    id: "sage",
-    name: "Sage",
-    description: "Calming green medical aesthetic",
-    background: "#F9FBF9",
-    primary: "#4A7C59",
-    accent: "#A8D5BA",
-    text: "#1E3A2C",
-    muted: "#5A7D6A",
-  },
-  {
-    id: "warm",
-    name: "Warm",
-    description: "Soft cream with terracotta accents",
-    background: "#FFFBF7",
-    primary: "#C4784F",
-    accent: "#E8D5C4",
-    text: "#3D2516",
-    muted: "#8B6F54",
-  },
-  {
-    id: "executive",
-    name: "Executive",
-    description: "Luxury dark mode with gold accents",
-    background: "#0d0d14",
-    primary: "#d4af37",
-    accent: "#f5f5dc",
-    text: "#f5f5dc",
-    muted: "#9ca3af",
-    isPremium: true,
-  },
-  {
-    id: "hero",
-    name: "Medical Hero",
-    description: "Bold teal gradient with dramatic header",
-    background: "#f0fdfa",
-    primary: "#0d9488",
-    accent: "#5eead4",
-    text: "#134e4a",
-    muted: "#5eead4",
-    isPremium: true,
-  },
-  {
-    id: "timeline",
-    name: "Timeline",
-    description: "Editorial style with career timeline",
-    background: "#faf7f2",
-    primary: "#c2410c",
-    accent: "#fbbf24",
-    text: "#1e293b",
-    muted: "#78716c",
-    isPremium: true,
-  },
-];
-
-// Mini profile preview component for template selector
-function TemplatePreview({ template }: { template: typeof TEMPLATES[0] }) {
-  return (
-    <div
-      className="rounded-lg overflow-hidden border border-slate-200 shadow-sm"
-      style={{ backgroundColor: template.background }}
-    >
-      {/* Mini header area */}
-      <div className="p-2 flex items-center gap-2">
-        {/* Avatar placeholder */}
-        <div
-          className="w-6 h-6 rounded-full"
-          style={{ backgroundColor: template.accent }}
-        />
-        {/* Name and specialty placeholders */}
-        <div className="flex-1 space-y-1">
-          <div
-            className="h-1.5 w-12 rounded-full"
-            style={{ backgroundColor: template.text, opacity: 0.8 }}
-          />
-          <div
-            className="h-1 w-8 rounded-full"
-            style={{ backgroundColor: template.muted, opacity: 0.5 }}
-          />
-        </div>
-      </div>
-      {/* Button placeholder */}
-      <div className="px-2 pb-2">
-        <div
-          className="h-3 rounded-md"
-          style={{ backgroundColor: template.primary }}
-        />
-      </div>
-    </div>
-  );
+  profile_layout: string | null;
+  profile_theme: string | null;
 }
 
 interface ProfileSettingsProps {
@@ -165,10 +55,14 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
   const [externalBookingUrl, setExternalBookingUrl] = useState(
     profile.external_booking_url || ""
   );
-  const [selectedTemplate, setSelectedTemplate] = useState(
-    profile.profile_template || "classic"
+  const [selectedLayout, setSelectedLayout] = useState(
+    profile.profile_layout || "classic"
   );
-  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState(
+    profile.profile_theme || "blue"
+  );
+  const [isSavingLayout, setIsSavingLayout] = useState(false);
+  const [isSavingTheme, setIsSavingTheme] = useState(false);
   const [isFrozen, setIsFrozen] = useState(false);
   const [isTogglingFreeze, setIsTogglingFreeze] = useState(false);
 
@@ -280,27 +174,51 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
     }
   };
 
-  const handleTemplateChange = async (templateId: string) => {
-    setSelectedTemplate(templateId);
-    setIsSavingTemplate(true);
+  const handleLayoutChange = async (layoutId: string) => {
+    setSelectedLayout(layoutId);
+    setIsSavingLayout(true);
     try {
       const response = await fetch(`/api/profiles/${profile.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profileTemplate: templateId }),
+        body: JSON.stringify({ profileLayout: layoutId }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update template");
+        throw new Error("Failed to update layout");
       }
 
-      toast.success("Template updated!");
+      toast.success("Layout updated!");
       router.refresh();
     } catch {
-      toast.error("Failed to update template");
-      setSelectedTemplate(profile.profile_template || "classic");
+      toast.error("Failed to update layout");
+      setSelectedLayout(profile.profile_layout || "classic");
     } finally {
-      setIsSavingTemplate(false);
+      setIsSavingLayout(false);
+    }
+  };
+
+  const handleThemeChange = async (themeId: string) => {
+    setSelectedTheme(themeId);
+    setIsSavingTheme(true);
+    try {
+      const response = await fetch(`/api/profiles/${profile.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileTheme: themeId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update theme");
+      }
+
+      toast.success("Theme updated!");
+      router.refresh();
+    } catch {
+      toast.error("Failed to update theme");
+      setSelectedTheme(profile.profile_theme || "blue");
+    } finally {
+      setIsSavingTheme(false);
     }
   };
 
@@ -531,69 +449,111 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
         </form>
       </div>
 
-      {/* Template Selection */}
+      {/* Layout Selection */}
       <div className="bg-white rounded-xl border border-slate-200 p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Palette className="w-5 h-5 text-slate-500" />
+          <Layout className="w-5 h-5 text-slate-500" />
           <h2 className="text-lg font-semibold text-slate-900">
-            Profile Theme
+            Profile Layout
           </h2>
         </div>
         <p className="text-sm text-slate-500 mb-4">
-          Choose how your public profile looks to visitors
+          Choose the structure and arrangement of your profile
         </p>
 
-        <div className="grid sm:grid-cols-2 gap-3">
-          {TEMPLATES.map((template) => (
+        <div className="grid sm:grid-cols-3 gap-3">
+          {LAYOUTS.map((layout) => (
             <button
-              key={template.id}
+              key={layout.id}
               type="button"
-              onClick={() => handleTemplateChange(template.id)}
-              disabled={isSavingTemplate}
+              onClick={() => handleLayoutChange(layout.id)}
+              disabled={isSavingLayout}
               className={cn(
                 "relative p-4 rounded-xl border-2 text-left transition-all hover:shadow-md",
-                selectedTemplate === template.id
+                selectedLayout === layout.id
                   ? "border-[#0099F7] bg-blue-50/50 ring-2 ring-[#0099F7]/20"
                   : "border-slate-200 hover:border-slate-300"
               )}
             >
-              {selectedTemplate === template.id && (
+              {selectedLayout === layout.id && (
                 <div className="absolute top-3 right-3 w-5 h-5 bg-[#0099F7] rounded-full flex items-center justify-center">
                   <Check className="w-3 h-3 text-white" />
                 </div>
               )}
 
-              {/* Mini profile preview */}
-              <div className="mb-3">
-                <TemplatePreview template={template} />
-              </div>
-
-              {/* Color swatches */}
-              <div className="flex gap-1.5 mb-2">
-                <div
-                  className="w-5 h-5 rounded-full border border-slate-200/50 shadow-sm"
-                  style={{ backgroundColor: template.background }}
-                  title="Background"
-                />
-                <div
-                  className="w-5 h-5 rounded-full border border-slate-200/50 shadow-sm"
-                  style={{ backgroundColor: template.primary }}
-                  title="Primary"
-                />
-                <div
-                  className="w-5 h-5 rounded-full border border-slate-200/50 shadow-sm"
-                  style={{ backgroundColor: template.accent }}
-                  title="Accent"
-                />
-              </div>
-
-              <p className="font-medium text-slate-900">{template.name}</p>
-              <p className="text-xs text-slate-500">{template.description}</p>
+              <p className="font-medium text-slate-900 mb-1">{layout.name}</p>
+              <p className="text-xs text-slate-500 mb-2">{layout.description}</p>
+              <p className="text-[10px] text-slate-400 italic">{layout.preview}</p>
             </button>
           ))}
         </div>
 
-        {isSavingTemplate && (
+        {isSavingLayout && (
+          <p className="text-sm text-slate-500 mt-3 flex items-center gap-2">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            Saving...
+          </p>
+        )}
+      </div>
+
+      {/* Color Theme Selection */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Palette className="w-5 h-5 text-slate-500" />
+          <h2 className="text-lg font-semibold text-slate-900">
+            Color Theme
+          </h2>
+        </div>
+        <p className="text-sm text-slate-500 mb-4">
+          Choose the color palette applied to your layout
+        </p>
+
+        <div className="grid sm:grid-cols-3 gap-3">
+          {THEMES.map((theme) => (
+            <button
+              key={theme.id}
+              type="button"
+              onClick={() => handleThemeChange(theme.id)}
+              disabled={isSavingTheme}
+              className={cn(
+                "relative p-4 rounded-xl border-2 text-left transition-all hover:shadow-md",
+                selectedTheme === theme.id
+                  ? "border-[#0099F7] bg-blue-50/50 ring-2 ring-[#0099F7]/20"
+                  : "border-slate-200 hover:border-slate-300"
+              )}
+            >
+              {selectedTheme === theme.id && (
+                <div className="absolute top-3 right-3 w-5 h-5 bg-[#0099F7] rounded-full flex items-center justify-center">
+                  <Check className="w-3 h-3 text-white" />
+                </div>
+              )}
+
+              {/* Color swatches */}
+              <div className="flex gap-1.5 mb-3">
+                <div
+                  className="w-6 h-6 rounded-full border border-slate-200/50 shadow-sm"
+                  style={{ backgroundColor: theme.colors.background }}
+                  title="Background"
+                />
+                <div
+                  className="w-6 h-6 rounded-full border border-slate-200/50 shadow-sm"
+                  style={{ backgroundColor: theme.colors.primary }}
+                  title="Primary"
+                />
+                <div
+                  className="w-6 h-6 rounded-full border border-slate-200/50 shadow-sm"
+                  style={{ backgroundColor: theme.colors.accent }}
+                  title="Accent"
+                />
+              </div>
+
+              <p className="font-medium text-slate-900">{theme.name}</p>
+              <p className="text-xs text-slate-500">{theme.description}</p>
+            </button>
+          ))}
+        </div>
+
+        {isSavingTheme && (
           <p className="text-sm text-slate-500 mt-3 flex items-center gap-2">
             <Loader2 className="w-3 h-3 animate-spin" />
             Saving...
