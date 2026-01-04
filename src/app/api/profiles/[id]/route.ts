@@ -56,7 +56,7 @@ const updateProfileSchema = z.object({
   yearsExperience: z.number().min(0).max(70).nullable().optional(),
   profilePhotoUrl: z.string().url().nullable().optional(),
   externalBookingUrl: z.string().url().nullable().optional(),
-  profileTemplate: z.enum(["classic", "ocean", "sage", "warm"]).optional(),
+  profileTemplate: z.enum(["classic", "ocean", "sage", "warm", "executive", "hero", "timeline"]).optional(),
   bio: z.string().max(2000).nullable().optional(),
   qualifications: z.string().max(1000).nullable().optional(),
   languages: z.string().max(500).nullable().optional(),
