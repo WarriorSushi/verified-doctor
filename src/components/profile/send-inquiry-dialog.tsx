@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Loader2, Send, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { ValidatedInput, validationRules } from "@/components/ui/validated-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -31,9 +31,17 @@ export function SendInquiryDialog({
 }: SendInquiryDialogProps) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [error, setError] = useState("");
+  const [formValid, setFormValid] = useState({ name: false, phone: false, email: true });
+
+  const updateFieldValidity = useCallback((field: keyof typeof formValid, isValid: boolean) => {
+    setFormValid(prev => ({ ...prev, [field]: isValid }));
+  }, []);
+
+  const isFormValid = formValid.name && formValid.phone && formValid.email && message.trim().length > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +56,7 @@ export function SendInquiryDialog({
           profileId,
           senderName: name,
           senderPhone: phone,
+          senderEmail: email || undefined,
           messageContent: message,
         }),
       });
@@ -74,6 +83,7 @@ export function SendInquiryDialog({
     if (status === "success") {
       setName("");
       setPhone("");
+      setEmail("");
       setMessage("");
       setStatus("idle");
     }
@@ -98,7 +108,7 @@ export function SendInquiryDialog({
               <Check className="w-8 h-8 text-emerald-600" />
             </div>
             <p className="text-slate-600">
-              You&apos;ll receive a reply via SMS to the phone number you provided.
+              Your message has been sent. The doctor will contact you via phone or email.
             </p>
             <Button onClick={handleClose} className="mt-4">
               Close
@@ -108,27 +118,50 @@ export function SendInquiryDialog({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Your Name</Label>
-              <Input
+              <ValidatedInput
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="John Doe"
-                required
+                rules={[
+                  validationRules.required("Please enter your name"),
+                  validationRules.minLength(2, "Name must be at least 2 characters"),
+                ]}
+                onValidationChange={(isValid) => updateFieldValidity("name", isValid)}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
-              <Input
+              <ValidatedInput
                 id="phone"
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+91 98765 43210"
-                required
+                rules={[
+                  validationRules.required("Please enter your phone number"),
+                  validationRules.phone("Please enter a valid phone number"),
+                ]}
+                onValidationChange={(isValid) => updateFieldValidity("phone", isValid)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email (optional)</Label>
+              <ValidatedInput
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your.email@example.com"
+                rules={[
+                  validationRules.email("Please enter a valid email address"),
+                ]}
+                onValidationChange={(isValid) => updateFieldValidity("email", isValid)}
               />
               <p className="text-xs text-slate-500">
-                Doctor&apos;s reply will be sent to this number
+                Doctor may contact you via phone or email
               </p>
             </div>
 
@@ -165,8 +198,8 @@ export function SendInquiryDialog({
               </Button>
               <Button
                 type="submit"
-                disabled={status === "loading"}
-                className="flex-1 bg-gradient-to-r from-[#0099F7] to-[#0080CC] hover:from-[#0088E0] hover:to-[#0070B8] text-white"
+                disabled={status === "loading" || !isFormValid}
+                className="flex-1 bg-gradient-to-r from-[#0099F7] to-[#0080CC] hover:from-[#0088E0] hover:to-[#0070B8] text-white disabled:opacity-50"
               >
                 {status === "loading" ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

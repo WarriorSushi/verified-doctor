@@ -14,6 +14,7 @@ const createMessageSchema = z.object({
   profileId: z.string().uuid("Invalid profile ID"),
   senderName: z.string().min(2, "Name is required").max(100),
   senderPhone: z.string().min(10, "Valid phone number required").max(20),
+  senderEmail: z.string().email("Invalid email").max(255).optional(),
   messageContent: z.string().min(10, "Message too short").max(500, "Message too long"),
 });
 
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { profileId, senderName, senderPhone, messageContent } = result.data;
+    const { profileId, senderName, senderPhone, senderEmail, messageContent } = result.data;
 
     const supabase = await createClient();
 
@@ -78,6 +79,7 @@ export async function POST(request: Request) {
         profile_id: profileId,
         sender_name: senderName,
         sender_phone: senderPhone,
+        sender_email: senderEmail || null,
         message_content: messageContent,
         is_read: false,
       })

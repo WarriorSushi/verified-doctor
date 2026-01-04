@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
+import bcrypt from "bcryptjs";
 
 // Production security: These MUST be set in environment variables
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
@@ -37,7 +38,25 @@ export async function validateAdminCredentials(
     console.error("Admin credentials not configured");
     return false;
   }
-  return email === ADMIN_EMAIL && password === ADMIN_PASSWORD;
+
+  // Check email first (case-insensitive)
+  if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+    return false;
+  }
+
+  // Check if ADMIN_PASSWORD is a bcrypt hash (starts with $2a$ or $2b$)
+  const isHashedPassword = ADMIN_PASSWORD.startsWith("$2a$") || ADMIN_PASSWORD.startsWith("$2b$");
+
+  if (isHashedPassword) {
+    // Compare using bcrypt
+    return await bcrypt.compare(password, ADMIN_PASSWORD);
+  } else {
+    // Fallback for plain text (development only - log warning)
+    if (process.env.NODE_ENV === "production") {
+      console.warn("[SECURITY] Admin password is not hashed. Run: npx bcryptjs hash <password>");
+    }
+    return password === ADMIN_PASSWORD;
+  }
 }
 
 export async function createAdminSession(): Promise<string> {
@@ -77,4 +96,11 @@ export function isAdmin(userId: string): boolean {
   // This is a placeholder - in production, you might want to check against a list of admin user IDs
   const adminUserIds = process.env.ADMIN_USER_IDS?.split(",") || [];
   return adminUserIds.includes(userId);
+}
+
+// Utility to generate bcrypt hash for password setup
+// Usage: npx ts-node -e "import { hashPassword } from './src/lib/admin-auth'; hashPassword('your-password').then(console.log)"
+export async function hashPassword(password: string): Promise<string> {
+  const saltRounds = 12;
+  return await bcrypt.hash(password, saltRounds);
 }

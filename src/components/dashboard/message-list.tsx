@@ -3,10 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { MessageSquare, Phone, Clock, Check, Send, Loader2, Trash2, Pin, Shield } from "lucide-react";
+import { MessageSquare, Phone, Mail, Clock, Check, Copy, Trash2, Pin, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +28,7 @@ interface Message {
   id: string;
   sender_name: string;
   sender_phone: string;
+  sender_email?: string | null;
   message_content: string;
   is_read: boolean | null;
   reply_content: string | null;
@@ -48,13 +48,19 @@ export function MessageList({ messages: initialMessages, profileId }: MessageLis
   const router = useRouter();
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
-  const [replyContent, setReplyContent] = useState("");
-  const [isSending, setIsSending] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label} copied to clipboard`);
+    } catch {
+      toast.error("Failed to copy");
+    }
+  };
 
   const handleOpenMessage = async (message: Message) => {
     setSelectedMessage(message);
-    setReplyContent("");
 
     // Mark as read if unread
     if (!message.is_read) {
@@ -66,28 +72,33 @@ export function MessageList({ messages: initialMessages, profileId }: MessageLis
     }
   };
 
-  const handleSendReply = async () => {
-    if (!selectedMessage || !replyContent.trim()) return;
+  const markAsReplied = async () => {
+    if (!selectedMessage) return;
 
-    setIsSending(true);
     try {
-      await fetch(`/api/messages/${selectedMessage.id}/reply`, {
-        method: "POST",
+      await fetch(`/api/messages/${selectedMessage.id}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ replyContent }),
+        body: JSON.stringify({ replied: true }),
       });
 
       // Update local state
       setSelectedMessage({
         ...selectedMessage,
-        reply_content: replyContent,
         reply_sent_at: new Date().toISOString(),
       });
-      setReplyContent("");
+
+      // Update messages list
+      setMessages(messages.map(m =>
+        m.id === selectedMessage.id
+          ? { ...m, reply_sent_at: new Date().toISOString() }
+          : m
+      ));
+
+      toast.success("Marked as replied");
     } catch (error) {
-      console.error("Reply error:", error);
-    } finally {
-      setIsSending(false);
+      console.error("Mark replied error:", error);
+      toast.error("Failed to mark as replied");
     }
   };
 
@@ -279,53 +290,63 @@ export function MessageList({ messages: initialMessages, profileId }: MessageLis
                 )}
               </div>
 
-              {/* Reply Section */}
-              {selectedMessage.reply_sent_at ? (
-                <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-                  <div className="flex items-center gap-2 text-emerald-700 text-sm font-medium mb-2">
-                    <Check className="w-4 h-4" />
-                    Reply sent{" "}
-                    {formatDistanceToNow(
-                      new Date(selectedMessage.reply_sent_at),
-                      { addSuffix: true }
-                    )}
-                  </div>
-                  <p className="text-slate-700">
-                    {selectedMessage.reply_content}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <Textarea
-                    value={replyContent}
-                    onChange={(e) => setReplyContent(e.target.value)}
-                    placeholder="Type your reply..."
-                    rows={3}
-                    maxLength={500}
-                  />
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-400">
-                      {replyContent.length}/500 characters
-                    </span>
+              {/* Contact Options - Copy to respond privately */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-medium text-slate-700">Respond privately</h4>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    variant="outline"
+                    className="justify-start h-auto py-3"
+                    onClick={() => copyToClipboard(selectedMessage.sender_phone, "Phone number")}
+                  >
+                    <Phone className="w-4 h-4 mr-3 text-slate-500" />
+                    <div className="flex-1 text-left">
+                      <div className="font-medium">{selectedMessage.sender_phone}</div>
+                      <div className="text-xs text-slate-500">Click to copy phone</div>
+                    </div>
+                    <Copy className="w-4 h-4 text-slate-400" />
+                  </Button>
+
+                  {selectedMessage.sender_email && (
                     <Button
-                      onClick={handleSendReply}
-                      disabled={!replyContent.trim() || isSending}
+                      variant="outline"
+                      className="justify-start h-auto py-3"
+                      onClick={() => copyToClipboard(selectedMessage.sender_email!, "Email")}
                     >
-                      {isSending ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <>
-                          <Send className="w-4 h-4 mr-2" />
-                          Send Reply via SMS
-                        </>
-                      )}
+                      <Mail className="w-4 h-4 mr-3 text-slate-500" />
+                      <div className="flex-1 text-left">
+                        <div className="font-medium">{selectedMessage.sender_email}</div>
+                        <div className="text-xs text-slate-500">Click to copy email</div>
+                      </div>
+                      <Copy className="w-4 h-4 text-slate-400" />
                     </Button>
-                  </div>
-                  <p className="text-xs text-slate-500">
-                    Reply will be sent to {selectedMessage.sender_phone} via SMS
-                  </p>
+                  )}
                 </div>
-              )}
+
+                <p className="text-xs text-slate-500 mt-2">
+                  Copy the contact details and respond via your preferred method (phone call, WhatsApp, email, etc.)
+                </p>
+
+                {/* Mark as replied status */}
+                {selectedMessage.reply_sent_at ? (
+                  <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200 flex items-center gap-2">
+                    <Check className="w-4 h-4 text-emerald-600" />
+                    <span className="text-sm text-emerald-700">
+                      Marked as replied{" "}
+                      {formatDistanceToNow(new Date(selectedMessage.reply_sent_at), { addSuffix: true })}
+                    </span>
+                  </div>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    onClick={markAsReplied}
+                  >
+                    <Check className="w-4 h-4 mr-2" />
+                    Mark as Replied
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </DialogContent>

@@ -4,6 +4,10 @@ import { headers } from "next/headers";
 
 // Create Redis client - will be null if env vars not configured
 let redis: Redis | null = null;
+let redisWarningShown = false;
+
+// Whether to block requests when Redis is unavailable (default: true in production)
+const STRICT_MODE = process.env.RATE_LIMIT_STRICT_MODE !== "false" && process.env.NODE_ENV === "production";
 
 function getRedis(): Redis | null {
   if (redis) return redis;
@@ -12,7 +16,14 @@ function getRedis(): Redis | null {
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
   if (!url || !token) {
-    console.warn("[rate-limit] Upstash Redis not configured. Rate limiting disabled.");
+    if (!redisWarningShown) {
+      if (STRICT_MODE) {
+        console.error("[rate-limit] CRITICAL: Upstash Redis not configured in production. Requests will be blocked.");
+      } else {
+        console.warn("[rate-limit] Upstash Redis not configured. Rate limiting disabled in development.");
+      }
+      redisWarningShown = true;
+    }
     return null;
   }
 
@@ -124,13 +135,27 @@ export async function getClientIp(): Promise<string> {
   return "unknown";
 }
 
-// Helper function to check rate limit with graceful fallback
+// Helper function to check rate limit with configurable fallback
 export async function checkRateLimit(
   limiter: Ratelimit | null,
-  identifier: string
+  identifier: string,
+  options?: { allowOnError?: boolean }
 ): Promise<RateLimitResult> {
-  // If limiter is not available (Redis not configured), allow the request
+  const allowOnError = options?.allowOnError ?? !STRICT_MODE;
+
+  // If limiter is not available (Redis not configured)
   if (!limiter) {
+    if (STRICT_MODE) {
+      // In strict mode (production), block requests when Redis unavailable
+      return {
+        success: false,
+        limit: 0,
+        remaining: 0,
+        reset: Date.now() + 60000,
+        retryAfter: 60,
+      };
+    }
+    // In development, allow requests
     return {
       success: true,
       limit: 0,
@@ -150,13 +175,23 @@ export async function checkRateLimit(
       retryAfter: result.success ? undefined : Math.ceil((result.reset - Date.now()) / 1000),
     };
   } catch (error) {
-    // On error, log and allow the request (graceful degradation)
     console.error("[rate-limit] Error checking rate limit:", error);
+    if (allowOnError) {
+      // Graceful degradation - allow request on error
+      return {
+        success: true,
+        limit: 0,
+        remaining: 0,
+        reset: 0,
+      };
+    }
+    // Strict mode - block on error
     return {
-      success: true,
+      success: false,
       limit: 0,
       remaining: 0,
-      reset: 0,
+      reset: Date.now() + 60000,
+      retryAfter: 60,
     };
   }
 }
@@ -175,12 +210,24 @@ export function formatRetryAfter(seconds: number): string {
 export async function rateLimit(
   identifier: string,
   maxRequests: number,
-  windowSeconds: number
+  windowSeconds: number,
+  options?: { allowOnError?: boolean }
 ): Promise<RateLimitResult> {
   const redisClient = getRedis();
+  const allowOnError = options?.allowOnError ?? !STRICT_MODE;
 
   if (!redisClient) {
-    // If Redis not configured, allow all requests
+    if (STRICT_MODE) {
+      // In strict mode (production), block requests when Redis unavailable
+      return {
+        success: false,
+        limit: maxRequests,
+        remaining: 0,
+        reset: Date.now() + windowSeconds * 1000,
+        retryAfter: windowSeconds,
+      };
+    }
+    // In development, allow all requests
     return {
       success: true,
       limit: maxRequests,
@@ -208,12 +255,22 @@ export async function rateLimit(
     };
   } catch (error) {
     console.error("[rate-limit] Error:", error);
-    // Graceful degradation - allow request on error
+    if (allowOnError) {
+      // Graceful degradation - allow request on error
+      return {
+        success: true,
+        limit: maxRequests,
+        remaining: maxRequests,
+        reset: Date.now() + windowSeconds * 1000,
+      };
+    }
+    // Strict mode - block on error
     return {
-      success: true,
+      success: false,
       limit: maxRequests,
-      remaining: maxRequests,
+      remaining: 0,
       reset: Date.now() + windowSeconds * 1000,
+      retryAfter: windowSeconds,
     };
   }
 }

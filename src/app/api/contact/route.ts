@@ -5,8 +5,12 @@ import { createClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { headers } from "next/headers";
 
-// Internal admin email - not exposed to users
-const ADMIN_EMAIL = "drsyedirfan93@gmail.com";
+// Admin email from environment variable
+const ADMIN_EMAIL = process.env.ADMIN_CONTACT_EMAIL || process.env.ADMIN_EMAIL;
+
+if (!ADMIN_EMAIL) {
+  console.error("[contact] ADMIN_CONTACT_EMAIL or ADMIN_EMAIL not configured");
+}
 
 const contactSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -155,17 +159,21 @@ ${contactMessage?.id ? `Reference ID: ${contactMessage.id}` : ""}
     `.trim();
 
     // Send email to admin
-    try {
-      await sendEmail({
-        to: ADMIN_EMAIL,
-        subject: `[Contact] ${typeLabels[type]}: ${subject || name}`,
-        html: emailHtml,
-        text: emailText,
-        replyTo: email, // Allow direct reply to the sender
-      });
-    } catch (emailError) {
-      console.error("[contact] Email send error:", emailError);
-      // Don't fail the request if email fails - message is already in DB
+    if (ADMIN_EMAIL) {
+      try {
+        await sendEmail({
+          to: ADMIN_EMAIL,
+          subject: `[Contact] ${typeLabels[type]}: ${subject || name}`,
+          html: emailHtml,
+          text: emailText,
+          replyTo: email, // Allow direct reply to the sender
+        });
+      } catch (emailError) {
+        console.error("[contact] Email send error:", emailError);
+        // Don't fail the request if email fails - message is already in DB
+      }
+    } else {
+      console.warn("[contact] Admin email not configured, skipping email notification");
     }
 
     return NextResponse.json({

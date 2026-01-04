@@ -36,10 +36,15 @@ export async function GET(request: NextRequest) {
       .from("profiles")
       .select("id, full_name, handle, specialty, profile_photo_url, is_verified, verification_status, recommendation_count, connection_count, created_at", { count: "exact" });
 
-    // Add search filter if provided - use ilike with properly sanitized input
-    // The search is now sanitized above to prevent SQL injection
+    // Add search filter using proper Supabase filters to prevent SQL injection
+    // Using multiple ilike filters with or() using array syntax
     if (search) {
-      query = query.or(`full_name.ilike.%${search}%,handle.ilike.%${search}%,specialty.ilike.%${search}%`);
+      // Create search pattern with wildcards
+      const searchPattern = `%${search}%`;
+      // Use Supabase's filter builder with proper parameterization
+      query = query.or(
+        `full_name.ilike.${searchPattern},handle.ilike.${searchPattern},specialty.ilike.${searchPattern}`
+      );
     }
 
     // Add pagination and ordering

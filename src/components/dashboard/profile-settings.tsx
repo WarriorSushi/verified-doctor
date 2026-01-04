@@ -35,27 +35,113 @@ const TEMPLATES = [
     id: "classic",
     name: "Classic",
     description: "Clean white with brand blue accents",
-    colors: ["#FFFFFF", "#0099F7", "#F8FAFC"],
+    background: "#FFFFFF",
+    primary: "#0099F7",
+    accent: "#A4FDFF",
+    text: "#0F172A",
+    muted: "#64748B",
   },
   {
     id: "ocean",
     name: "Ocean",
     description: "Soft blue professional theme",
-    colors: ["#F8FCFE", "#0077B6", "#90E0EF"],
+    background: "#F8FCFE",
+    primary: "#0077B6",
+    accent: "#90E0EF",
+    text: "#0A3D62",
+    muted: "#457B9D",
   },
   {
     id: "sage",
     name: "Sage",
     description: "Calming green medical aesthetic",
-    colors: ["#F9FBF9", "#4A7C59", "#A8D5BA"],
+    background: "#F9FBF9",
+    primary: "#4A7C59",
+    accent: "#A8D5BA",
+    text: "#1E3A2C",
+    muted: "#5A7D6A",
   },
   {
     id: "warm",
     name: "Warm",
     description: "Soft cream with terracotta accents",
-    colors: ["#FFFBF7", "#C4784F", "#E8D5C4"],
+    background: "#FFFBF7",
+    primary: "#C4784F",
+    accent: "#E8D5C4",
+    text: "#3D2516",
+    muted: "#8B6F54",
+  },
+  {
+    id: "executive",
+    name: "Executive",
+    description: "Luxury dark mode with gold accents",
+    background: "#0d0d14",
+    primary: "#d4af37",
+    accent: "#f5f5dc",
+    text: "#f5f5dc",
+    muted: "#9ca3af",
+    isPremium: true,
+  },
+  {
+    id: "hero",
+    name: "Medical Hero",
+    description: "Bold teal gradient with dramatic header",
+    background: "#f0fdfa",
+    primary: "#0d9488",
+    accent: "#5eead4",
+    text: "#134e4a",
+    muted: "#5eead4",
+    isPremium: true,
+  },
+  {
+    id: "timeline",
+    name: "Timeline",
+    description: "Editorial style with career timeline",
+    background: "#faf7f2",
+    primary: "#c2410c",
+    accent: "#fbbf24",
+    text: "#1e293b",
+    muted: "#78716c",
+    isPremium: true,
   },
 ];
+
+// Mini profile preview component for template selector
+function TemplatePreview({ template }: { template: typeof TEMPLATES[0] }) {
+  return (
+    <div
+      className="rounded-lg overflow-hidden border border-slate-200 shadow-sm"
+      style={{ backgroundColor: template.background }}
+    >
+      {/* Mini header area */}
+      <div className="p-2 flex items-center gap-2">
+        {/* Avatar placeholder */}
+        <div
+          className="w-6 h-6 rounded-full"
+          style={{ backgroundColor: template.accent }}
+        />
+        {/* Name and specialty placeholders */}
+        <div className="flex-1 space-y-1">
+          <div
+            className="h-1.5 w-12 rounded-full"
+            style={{ backgroundColor: template.text, opacity: 0.8 }}
+          />
+          <div
+            className="h-1 w-8 rounded-full"
+            style={{ backgroundColor: template.muted, opacity: 0.5 }}
+          />
+        </div>
+      </div>
+      {/* Button placeholder */}
+      <div className="px-2 pb-2">
+        <div
+          className="h-3 rounded-md"
+          style={{ backgroundColor: template.primary }}
+        />
+      </div>
+    </div>
+  );
+}
 
 interface ProfileSettingsProps {
   profile: Profile;
@@ -467,7 +553,7 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
               className={cn(
                 "relative p-4 rounded-xl border-2 text-left transition-all hover:shadow-md",
                 selectedTemplate === template.id
-                  ? "border-[#0099F7] bg-blue-50/50"
+                  ? "border-[#0099F7] bg-blue-50/50 ring-2 ring-[#0099F7]/20"
                   : "border-slate-200 hover:border-slate-300"
               )}
             >
@@ -477,15 +563,28 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
                 </div>
               )}
 
-              {/* Color preview */}
-              <div className="flex gap-1.5 mb-3">
-                {template.colors.map((color, i) => (
-                  <div
-                    key={i}
-                    className="w-6 h-6 rounded-full border border-slate-200"
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
+              {/* Mini profile preview */}
+              <div className="mb-3">
+                <TemplatePreview template={template} />
+              </div>
+
+              {/* Color swatches */}
+              <div className="flex gap-1.5 mb-2">
+                <div
+                  className="w-5 h-5 rounded-full border border-slate-200/50 shadow-sm"
+                  style={{ backgroundColor: template.background }}
+                  title="Background"
+                />
+                <div
+                  className="w-5 h-5 rounded-full border border-slate-200/50 shadow-sm"
+                  style={{ backgroundColor: template.primary }}
+                  title="Primary"
+                />
+                <div
+                  className="w-5 h-5 rounded-full border border-slate-200/50 shadow-sm"
+                  style={{ backgroundColor: template.accent }}
+                  title="Accent"
+                />
               </div>
 
               <p className="font-medium text-slate-900">{template.name}</p>

@@ -8,6 +8,9 @@ import {
   OceanTemplate,
   SageTemplate,
   WarmTemplate,
+  ExecutiveTemplate,
+  HeroTemplate,
+  TimelineTemplate,
 } from "@/components/profile/templates";
 import { PauseCircle } from "lucide-react";
 import type { Metadata } from "next";
@@ -376,6 +379,24 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
       return (
         <TemplateWithJsonLd>
           <WarmTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />
+        </TemplateWithJsonLd>
+      );
+    case "executive":
+      return (
+        <TemplateWithJsonLd>
+          <ExecutiveTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />
+        </TemplateWithJsonLd>
+      );
+    case "hero":
+      return (
+        <TemplateWithJsonLd>
+          <HeroTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />
+        </TemplateWithJsonLd>
+      );
+    case "timeline":
+      return (
+        <TemplateWithJsonLd>
+          <TimelineTemplate profile={extendedProfile} connectedDoctors={connectedDoctors} invitedBy={invitedBy} />
         </TemplateWithJsonLd>
       );
     case "classic":

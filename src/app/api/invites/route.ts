@@ -81,6 +81,9 @@ export async function POST(request: Request) {
     }
 
     // Check if email is already registered (if provided)
+    // Note: We don't reveal if the email is registered to prevent user enumeration
+    // Instead, we silently skip sending the email and return success
+    let emailAlreadyRegistered = false;
     if (result.data.email) {
       const { data: existingProfile } = await supabase
         .from("profiles")
@@ -89,10 +92,9 @@ export async function POST(request: Request) {
         .single();
 
       if (existingProfile) {
-        return NextResponse.json(
-          { error: "This email is already registered. They can use the accept invite feature instead." },
-          { status: 400 }
-        );
+        // Don't reveal that the email is registered - silently continue
+        // The invite will be created but the email won't be useful
+        emailAlreadyRegistered = true;
       }
     }
 
@@ -146,8 +148,8 @@ export async function POST(request: Request) {
     let emailSent = false;
     let emailError: string | undefined;
 
-    // Send invite email if email was provided
-    if (result.data.email) {
+    // Send invite email if email was provided and not already registered
+    if (result.data.email && !emailAlreadyRegistered) {
       console.log(`[invites] Attempting to send invite email to: ${result.data.email}`);
 
       const emailResult = await sendInviteEmail(
@@ -164,6 +166,9 @@ export async function POST(request: Request) {
         emailError = emailResult.error;
         console.error(`[invites] Failed to send invite email to ${result.data.email}:`, emailResult.error);
       }
+    } else if (emailAlreadyRegistered) {
+      // Pretend email was sent to prevent enumeration
+      emailSent = true;
     }
 
     return NextResponse.json({

@@ -103,7 +103,8 @@ export function ProfileActions({ profile }: ProfileActionsProps) {
           <Button
             onClick={handleSaveContact}
             variant="outline"
-            className="flex-1 h-12 px-2 sm:px-4"
+            size="xl"
+            className="flex-1 px-2 sm:px-4"
           >
             <Download className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">Save Contact</span>
@@ -111,7 +112,8 @@ export function ProfileActions({ profile }: ProfileActionsProps) {
           <Button
             onClick={handleShare}
             variant="outline"
-            className="h-12 px-3 sm:px-4"
+            size="xl"
+            className="px-3 sm:px-4"
           >
             {copied ? (
               <Check className="w-4 h-4 text-green-600" />
@@ -125,7 +127,8 @@ export function ProfileActions({ profile }: ProfileActionsProps) {
               trackEvent({ profileId: profile.id, eventType: "click_send_inquiry" });
               setIsInquiryOpen(true);
             }}
-            className="flex-1 h-12 px-2 sm:px-4 bg-gradient-to-r from-[#0099F7] to-[#0080CC] hover:from-[#0088E0] hover:to-[#0070B8] text-white"
+            size="xl"
+            className="flex-1 px-2 sm:px-4 bg-gradient-to-r from-[#0099F7] to-[#0080CC] hover:from-[#0088E0] hover:to-[#0070B8] text-white"
           >
             <MessageSquare className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">Send Inquiry</span>

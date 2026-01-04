@@ -5,6 +5,7 @@ import { getAuth } from "@/lib/auth";
 
 const updateSchema = z.object({
   isRead: z.boolean().optional(),
+  replied: z.boolean().optional(),
 });
 
 interface RouteParams {
@@ -43,6 +44,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     const updates: Record<string, unknown> = {};
     if (result.data.isRead !== undefined) {
       updates.is_read = result.data.isRead;
+    }
+    if (result.data.replied) {
+      updates.reply_sent_at = new Date().toISOString();
+      updates.is_read = true;
     }
 
     const { error } = await supabase

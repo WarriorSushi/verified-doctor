@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { verifyAdminSession } from "@/lib/admin-auth";
 import { sendVerificationApprovedEmail } from "@/lib/email";
+import { logAdminAction, getRequestIp } from "@/lib/audit-log";
 
 const actionSchema = z.object({
   action: z.enum(["approve", "reject"]),
@@ -78,6 +79,18 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         }
       }
 
+      // Audit log
+      await logAdminAction({
+        action: "verification_approved",
+        targetId: id,
+        targetType: "profile",
+        details: {
+          doctorName: profile?.full_name,
+          handle: profile?.handle,
+        },
+        adminIp: getRequestIp(request),
+      });
+
       return NextResponse.json({ success: true, status: "approved" });
     } else {
       // Reject - update status but don't verify
@@ -102,6 +115,14 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         .from("verification_documents")
         .delete()
         .eq("profile_id", id);
+
+      // Audit log
+      await logAdminAction({
+        action: "verification_rejected",
+        targetId: id,
+        targetType: "profile",
+        adminIp: getRequestIp(request),
+      });
 
       return NextResponse.json({ success: true, status: "rejected" });
     }
