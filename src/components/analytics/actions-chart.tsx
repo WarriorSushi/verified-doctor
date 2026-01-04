@@ -42,7 +42,7 @@ export function ActionsChart({ actionsBreakdown }: ActionsChartProps) {
       </CardHeader>
       <CardContent>
         <div className="h-[200px] sm:h-[250px]">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={150}>
             <BarChart data={data} layout="vertical" margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" horizontal={false} />
               <XAxis

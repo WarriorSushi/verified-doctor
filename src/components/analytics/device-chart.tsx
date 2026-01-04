@@ -52,7 +52,7 @@ export function DeviceChart({ deviceBreakdown }: DeviceChartProps) {
         ) : (
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <div className="h-[160px] w-[160px]">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={100}>
                 <PieChart>
                   <Pie
                     data={data}
